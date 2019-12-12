@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Checklist - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>bebleo: <span class="subtitle beta">Checklist</span></h1>
+        <nav>
+            <a href="{{ url_for('home.about') }}">About</a>
+            <a href="{{ url_for('home.contact') }}">Contact</a>
+        {% if g.user %}
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <a href="{{ url_for('auth.logout') }}">&#x265E;</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+        {% endif %}
+        </nav>
+    </div>
+    <div class="container">
+    {% for message in get_flashed_messages() %}
+        <div class="messages">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

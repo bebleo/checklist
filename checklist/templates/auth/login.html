@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="{{ url_for('auth.login') }}" method="post">
+        <h2>Login</h2>
+        <label for="username">email: </label>
+        <input type="email" name="username" id="username" required><br>
+        <label for="password">password: </label>
+        <input type="password" name="password" id="password" required><br>
+        <input type="checkbox" name="remember" id="remember">
+        <label for="remember">Remember login?</label><br>
+        <input type="submit" value="Login">
+    </form>
+    <a href="{{ url_for('auth.send_password_change') }}">Forgot Password</a> -or- <a href="{{ url_for('auth.register') }}">Register</a>
+{% endblock %}
