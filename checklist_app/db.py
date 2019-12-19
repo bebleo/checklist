@@ -15,7 +15,7 @@ from werkzeug.security import generate_password_hash
 
 
 def get_db():
-    """Gets the database and adds it to the globals."""
+    """Gets the database and adds it to g."""
     if 'db' not in g:
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
@@ -41,10 +41,18 @@ def init_db():
         db.executescript(f.read().decode('utf8'))
         current_app.logger.debug('Initialized tables.')
 
-    db.execute(
-        'INSERT INTO users (email, password, is_admin) VALUES (?, ?, ?)',
-        ('admin@admin.ad', generate_password_hash('admin'), True)
-    )
+    db.execute("""INSERT INTO 
+                    users (email, 
+                           password, 
+                           given_name, 
+                           family_name, 
+                           is_admin) 
+                  VALUES (?, ?, ?, ?, ?);""",
+                  ('admin@admin.ad', 
+                   generate_password_hash('admin'), 
+                   'Admin', 
+                   'Administrator', 
+                   True))
     db.commit()
     user = db.execute(
         'SELECT * FROM users WHERE email = ?',

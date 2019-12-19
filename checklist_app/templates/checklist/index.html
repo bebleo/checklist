@@ -13,10 +13,11 @@
             </thead>
             <tbody>
 {% for list in lists %}
+{% set per_complete = '{:.0%}'.format(list.percent_complete()) %}
                 <tr>
-                    <td>{{ list['title'] }}</td>
-                    <td>{{ list['created_date'] }}</td>
-                    <td>{% if list['is_complete'] %}&#10004;{% endif %}</td>
+                    <td><a href="{{ url_for('checklist.view', id=list.header['id']) }}">{{ list.header['title'] }}</a></td>
+                    <td>{{ list.header['created_date'].strftime('%Y-%m-%d') }}</td>
+                    <td>{% if list.header['is_complete'] %}&#10004;{% else %}{{ per_complete }}{% endif %}</td>
                 </tr>
 {% endfor %}            
             </tbody>

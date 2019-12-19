@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import success_message %}
+
+{% block content %}
+    {{ success_message('Success: The user has been saved.', success)}}
+    <form action="" method="post">
+        <h2>Edit User</h2>
+        <label for="username">Username: </label>
+        <input type="email" name="username" id="username" value="{{ user['email'] }}"><br>
+        <label for="given_name">Given name: </label>
+        <input type="text" name="given_name" id="given_name" value="{{ user['given_name'] }}"><br>
+        <label for="family_name">Family name: </label>
+        <input type="text" name="family_name" id="family_name" value="{{ user['family_name'] }}"><br>
+        <input type="checkbox" name="is_admin" id="is_admin" {% if user['is_admin'] %}checked{% endif %}>
+        <label for="is_admin">is administrator</label><br>
+        <input type="submit" value="Save">
+        <input type="reset" value="Cancel"><br>
+    </form>
+{% endblock %}

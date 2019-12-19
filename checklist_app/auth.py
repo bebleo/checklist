@@ -1,13 +1,11 @@
-"""
-    checklist.auth
-    ~~~~~~~~~~~~~~
-
-    Handles user, authentication, registration and related matters. Based
-    heavily on the Flask tutorial
-
-    :copyright: 2019 Bebleo
-    :license: MIT
-"""
+# ----------------------------------------------------------------------
+# checklist.auth
+# Handles user, authentication, registration and related matters. Based
+# heavily on the Flask tutorial
+#:
+# James Warne
+# December 12, 2019
+# ----------------------------------------------------------------------
 
 import functools
 import uuid
@@ -17,11 +15,10 @@ from flask import (Blueprint, current_app, flash, g, logging, redirect,
 from werkzeug.exceptions import abort
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from checklist.db import get_db
+from checklist_app.db import get_db
+from flask_mail import Mail
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
-log = current_app.logger
-
 
 @bp.route('/forgotpassword', methods=('GET', 'POST'))
 def send_password_change():
@@ -46,28 +43,40 @@ def send_password_change():
         if not user:
             flash("No user found with email.")
         else:
+            mail = Mail(current_app)
+            mail.send_message(subject='Reset Password Link',
+                              recipients=[user['email']],
+                              sender='Bebleo <bebleo@mail.localhost>',
+                              body=render_template('emails/send_password_change.txt',
+                                                   host=request.host, 
+                                                   user=user, 
+                                                   token=token))
             sent = True
 
-    return render_template('auth/send_password_change.html', email_sent=sent, debug=current_app.debug, token=token)
-
+    return render_template('auth/send_password_change.html', 
+                           email_sent=sent, 
+                           debug=current_app.debug, 
+                           token=token)
 
 @bp.route('/forgotpassword/<string:token>', methods=('GET', 'POST'))
 def forgot_password(token = None):
     """Allow user to change the password based on providing a token"""
     if request.method == 'POST':
         # save the password
+        username = request.form['username']
         password = request.form['password']
         confirm = request.form['confirm']
         db = get_db()
 
         # Check the token is valid and get the user_id from the db
-        token_query = 'SELECT * FROM password_tokens WHERE token = ?'
-        token = db.execute(token_query, (token, )).fetchone()
+        user = db.execute('SELECT id FROM users WHERE email = ?', (username, )).fetchone()
+        token_query = 'SELECT * FROM password_tokens WHERE token = ? AND user_id = ?'
+        token = db.execute(token_query, (token, user['id'])).fetchone()
 
         if token is None:
             flash('Token is incorrect or expired.')
-            log.warn('Incorrect or expired token {} used for password reset.'.format(token))
-            return render_template('auth/send_password_chenge')
+            current_app.logger.warn('Incorrect or expired token {} used for password reset.'.format(token))
+            return redirect(url_for('auth.send_password_change'))
 
         if password == confirm:
             password_hash = generate_password_hash(password)
@@ -80,15 +89,23 @@ def forgot_password(token = None):
                 'DELETE FROM password_tokens WHERE id = ?',
                 (token['id'], )
             )
+            user = db.execute(
+                'SELECT * FROM users WHERE id = ?;',
+                (user_id, )
+            ).fetchone()
             db.commit()
 
-            log.info('Password reset for user with id {}.'.format(user_id))
+            mail = Mail(current_app)
+            mail.send_message(subject='Password reset',
+                               recipients=[user['email']],
+                               sender='james.warne@outlook.com',
+                               body=render_template('emails/password_reset.txt', user=user))
+            current_app.logger.info('Password reset for user with id {}.'.format(user_id))
             return redirect(url_for('home.index'))
         else:
             flash('Password and confirmation must match.')
 
     return render_template('auth/update_password.html', token=token)
-
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -113,17 +130,17 @@ def register():
 
         if error is None:
             hash = generate_password_hash(password)
-            insert_user_query = 'INSERT INTO users (email, password) VALUES (?, ?); SELECT last_insert_rowid();'
+            insert_user_query = 'INSERT INTO users (email, password) VALUES (?, ?);'
             insert_user_vars = (username, hash, )
-            user_id = db.execute(insert_user_query, insert_user_vars).fetchone()
+            db.execute(insert_user_query, insert_user_vars)
+            user_id = db.execute('SELECT last_insert_rowid()').fetchone()
             db.commit()
-            log.info('Registered user with id {}'.format(user_id))
+            current_app.logger.info('Registered user with id {}'.format(user_id))
             return redirect(url_for('home.index'))
         else:
             flash(error)
 
     return render_template('auth/register.html')
-
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
@@ -156,12 +173,11 @@ def login():
 
     return render_template('auth/login.html')
 
-
 @bp.route('/logout')
 def logout():
     session.clear()
+    g.user = None
     return redirect(url_for('home.index'))
-
 
 @bp.before_app_request
 def fetch_logged_in_user():
@@ -175,7 +191,6 @@ def fetch_logged_in_user():
             'SELECT * FROM users WHERE id = ?',
             (user_id, )
         ).fetchone()
-
 
 def login_required(view):
     @functools.wraps(view)

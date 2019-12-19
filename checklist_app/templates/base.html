@@ -14,6 +14,9 @@
             <a href="{{ url_for('home.about') }}">About</a>
             <a href="{{ url_for('home.contact') }}">Contact</a>
         {% if g.user %}
+        {% if g.user['is_admin'] %}
+            <a href="{{ url_for('admin.list_users') }}">Admin</a>
+        {% endif %}
             <a href="{{ url_for('auth.logout') }}">Logout</a>
             <a href="{{ url_for('auth.logout') }}">&#x265E;</a>
         {% else %}

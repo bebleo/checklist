@@ -7,8 +7,11 @@
 # ------------------------------------------------------------------
 
 import os
+
 from flask import Flask
-from . import (auth, db, home, list)
+from flask_mail import Mail
+
+from . import admin, auth, db, home, checklist
 
 def create_app(test_config=None):
     """Creates the flask app and initilizes the instance folder
@@ -16,8 +19,8 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
 
     app.config.from_mapping(
-        SECRET_KEY='devserver',
-        DATABASE=os.path.join(app.instance_path, 'checklist.sqlite3')
+        SECRET_KEY='<unsafe_secret_k3y/>',
+        DATABASE=os.path.join(app.instance_path, 'checklist.sqlite3'),
     )
 
     # Load altenative mappings as necessary
@@ -32,12 +35,13 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Register the close_db for teardown.
+    # Wireup the database and mail.
     db.init_app(app)
 
     # Register BluePrints
     app.register_blueprint(auth.bp)
     app.register_blueprint(home.bp)
-    app.register_blueprint(list.bp)
+    app.register_blueprint(checklist.bp)
+    app.register_blueprint(admin.bp)
 
     return app

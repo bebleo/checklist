@@ -84,6 +84,11 @@ html {
     clear: left;
     display: inline-block;
 }
+.notice {
+    border: 1px solid darkblue;
+    background-color: white;
+    border-radius: 2px;
+}
 nav {
     text-align: right;
     display: inline;

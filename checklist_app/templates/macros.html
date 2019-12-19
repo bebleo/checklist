@@ -1,0 +1,9 @@
+{# Macros for common use in the application #}
+
+{% macro success_message(msg, show=False) %}
+{% if show %}
+    <div class="notice">
+        <p>{{ msg }}</p>
+    </div>
+{% endif %}
+{% endmacro %}

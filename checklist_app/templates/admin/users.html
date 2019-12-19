@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Users</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Admin</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+{% for user in users %}
+            <tr>
+                <td>{% if user['is_admin'] %}&bull;{% endif %}</td>
+                <td>{{ user['given_name'] }} {{ user['family_name'] }}</td>
+                <td>{{ user['email'] }}</td>
+                <td><a href="{{ url_for('admin.edit_user', id=user['id']) }}">Edit</a></td>
+            </tr>
+{% endfor %}
+        </tbody>
+    </table>
+{% endblock%}
