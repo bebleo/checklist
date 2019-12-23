@@ -46,7 +46,7 @@ def get_checklist(id):
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
-def create():
+def create(id=None):
     if request.method == 'POST':
         db = get_db()
         title = request.form['list_title']
@@ -74,7 +74,46 @@ def create():
 
             return redirect(url_for('checklist.view', id=list_id))
 
-    return render_template('checklist/create.html')
+    return render_template('checklist/create.html', header=None)
+
+@bp.route('/edit/<int:id>', methods=('GET', 'POST'))
+@login_required
+def edit(id):
+    """Edit the checklist header with primary key matchig the id."""
+    db = get_db()
+    checklist = get_checklist(id)
+
+    if checklist is None:
+        abort(401)
+
+    if request.method == 'POST':
+        title = request.form['list_title']
+        desc = request.form['list_description']
+
+        current_app.logger.debug(f'{title}')
+        current_app.logger.debug(f'{desc}')
+
+        if title != checklist.header["title"]:
+            current_app.logger.debug(f"{title} not {checklist.header['title']}")
+            change_history = f"{g.user['given_name']} updated the list title from \"{checklist.header['title']}\" to \"{title}\""
+            db.execute("UPDATE checklists SET title = ? WHERE id = ?", (title, id,))
+            db.execute(
+                'INSERT INTO checklist_history (change_description, checklist_id, user_id) VALUES (?, ?, ?);',
+                (change_history, checklist.header['id'], g.user['id'],)
+            )
+
+        if desc != checklist.header["description"]:
+            change_history = f"{g.user['given_name']} updated the description from \"{checklist.header['description']}\" to \"{desc}\""
+            db.execute("UPDATE checklists SET [description] = ? WHERE id = ?", (desc, id,))
+            db.execute(
+                'INSERT INTO checklist_history (change_description, checklist_id, user_id) VALUES (?, ?, ?);',
+                (change_history, checklist.header['id'], g.user['id'],)
+            )
+        
+        db.commit()
+        return redirect(url_for('checklist.view', id=id))
+            
+    return render_template('checklist/create.html', header=checklist.header)
 
 @bp.route('/')
 @login_required

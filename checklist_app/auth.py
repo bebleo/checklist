@@ -2,7 +2,7 @@
 # checklist.auth
 # Handles user, authentication, registration and related matters. Based
 # heavily on the Flask tutorial
-#:
+# 
 # James Warne
 # December 12, 2019
 # ----------------------------------------------------------------------
@@ -10,13 +10,12 @@
 import functools
 import uuid
 
-from flask import (Blueprint, current_app, flash, g, logging, redirect,
+from flask import (Blueprint, abort, current_app, flash, g, logging, redirect,
                    render_template, request, session, url_for)
-from werkzeug.exceptions import abort
+from flask_mail import Mail
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from checklist_app.db import get_db
-from flask_mail import Mail
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -61,21 +60,32 @@ def send_password_change():
 @bp.route('/forgotpassword/<string:token>', methods=('GET', 'POST'))
 def forgot_password(token = None):
     """Allow user to change the password based on providing a token"""
+    db=get_db()
+
+    t = db.execute(
+        'SELECT * FROM password_tokens WHERE token = ?;',
+        (token, )
+    ).fetchone()
+
+    if t is None:
+        flash('Token is incorrect or expired.')
+        current_app.logger.warn(f'Incorrect or expired token {token} used for password reset.')
+        return redirect(url_for('auth.send_password_change'))
+
     if request.method == 'POST':
         # save the password
         username = request.form['username']
         password = request.form['password']
         confirm = request.form['confirm']
-        db = get_db()
 
         # Check the token is valid and get the user_id from the db
         user = db.execute('SELECT id FROM users WHERE email = ?', (username, )).fetchone()
         token_query = 'SELECT * FROM password_tokens WHERE token = ? AND user_id = ?'
-        token = db.execute(token_query, (token, user['id'])).fetchone()
+        t = db.execute(token_query, (token, user['id'])).fetchone()
 
-        if token is None:
+        if t is None:
             flash('Token is incorrect or expired.')
-            current_app.logger.warn('Incorrect or expired token {} used for password reset.'.format(token))
+            current_app.logger.warn(f'Incorrect or expired token {token} used for password reset.')
             return redirect(url_for('auth.send_password_change'))
 
         if password == confirm:
@@ -83,16 +93,13 @@ def forgot_password(token = None):
             user_id = token['user_id']
             db.execute(
                 'UPDATE users SET password = ? WHERE id = ?',
-                (password_hash, user_id)
-            )
+                (password_hash, user_id))
             db.execute(
                 'DELETE FROM password_tokens WHERE id = ?',
-                (token['id'], )
-            )
+                (token['id'], ))
             user = db.execute(
                 'SELECT * FROM users WHERE id = ?;',
-                (user_id, )
-            ).fetchone()
+                (user_id, )).fetchone()
             db.commit()
 
             mail = Mail(current_app)
@@ -112,8 +119,11 @@ def register():
     """Return the form to register the user and handle the response."""
     if request.method == 'POST':
         username = request.form['username'].strip()
+        given_name = request.form['given_name'].strip()
+        family_name = request.form['family_name'].strip()
         password = request.form['password'].strip()
         confirm = request.form['confirm'].strip()
+        
         db = get_db()
         error = None
 
@@ -129,13 +139,15 @@ def register():
             error = 'Username is already used.'
 
         if error is None:
-            hash = generate_password_hash(password)
-            insert_user_query = 'INSERT INTO users (email, password) VALUES (?, ?);'
-            insert_user_vars = (username, hash, )
-            db.execute(insert_user_query, insert_user_vars)
-            user_id = db.execute('SELECT last_insert_rowid()').fetchone()
+            # Insert the user into database
+            cur = db.Cursor()
+            cur.execute(
+                'INSERT INTO users (email, given_name, family_name, password) VALUES (?, ?, ?, ?);', 
+                (username, given_name, family_name, generate_password_hash(password), ))
+            user_id = cur.lastrowid
             db.commit()
-            current_app.logger.info('Registered user with id {}'.format(user_id))
+
+            current_app.logger.info(f'Registered user with id {user_id}')
             return redirect(url_for('home.index'))
         else:
             flash(error)

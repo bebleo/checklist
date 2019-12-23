@@ -2,6 +2,9 @@
 
 {% block content %}
     <h2>Users</h2>
+    <div id="actions" class="actions">
+        <p><strong>Actions: </strong><a href="{{ url_for('admin.add_user') }}">Add New*</a></p>
+    </div>
     <table>
         <thead>
             <tr>

@@ -7,13 +7,16 @@ a:hover {
 body {
     background-color: aliceblue;
     font-family: Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0 auto;
+    margin: 0;
 }
 div.container {
     text-align: auto;
     max-width: 1000px;
     padding: 8px;
     clear: both;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
 }
 h1 {
     color: darkorange;
@@ -22,6 +25,38 @@ h1 {
 html {
     position: relative;
     min-height: 100%;
+}
+.inline-form {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 0.2em;
+}
+label {
+    /* width: 100px;
+    display: inline-block; */
+    clear: right;
+    display: block;
+}
+.inline-form label {
+    clear: none;
+    display: initial;
+}
+input[type=text] {
+    width: 100%;
+}
+.inline-form input[type=text] {
+    flex: 1;
+    margin-right: 0.5em;
+    margin-left: 0.5em;
+}
+input[type=email] {
+    width: 50%;
+}
+input[type=password] {
+    width: 50%;
+}
+textarea {
+    width: 100%;
 }
 .beta::after {
     content: " beta";
@@ -76,8 +111,12 @@ html {
     max-width: 1000px;
     padding: 8px;
     clear: both;
-    text-align: left;
+    text-align: center;
     vertical-align: bottom;
+    justify-content: space-between;
+    display: flex;
+    align-items: flex-end;
+    margin: 0 auto;
 }
 .header > h1 {
     margin: 0;
@@ -88,6 +127,18 @@ html {
     border: 1px solid darkblue;
     background-color: white;
     border-radius: 2px;
+    padding: 0.5em;
+}
+.logo {
+    width: 50%;
+    min-width:300px;
+    text-align: left;
+}
+.nav-links {
+    width: 50%;
+    min-width: 300px;
+    text-align: right;
+    flex: 1;
 }
 nav {
     text-align: right;
@@ -102,11 +153,32 @@ nav::after {
 }
 nav > a {
     color: white;
+    margin: 0.5em;
 }
 nav > li {
     display: inline-block;
     margin-left: 2em;
     color: white;
+}
+.sidebar {
+    max-width: 250px;
+    width: 33%;
+    margin-right: 2em;
+    padding-top: 3em;
+}
+.content {
+    background-color: white;
+    border: 1px solid grey;
+    padding: 0 24px 24px 24px;
+    flex: 1;
+    min-width: 300px;
+}
+.messages {
+    background-color: cornsilk;
+    border: 1px solid goldenrod;
+    padding: 0.5em;
+    clear: right;
+    flex: 1;
 }
 .subtitle {
     font-size: 80%;
@@ -125,4 +197,8 @@ nav > li {
     margin-bottom: 0.25em;
     font-size: small;
     background-color: rgb(217, 240, 255);
+}
+.width-50 {
+    width: 50%;
+    /* max-width: 300px; */
 }

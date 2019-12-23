@@ -1,14 +1,36 @@
 {% extends 'base.html' %}
 
+{% block sidebar %}
+    <div class="sidebar">
+        <strong>Tasks</strong>
+        <hr>
+        <a href="/">Mark complete</a><br>
+        <a href="/">Delete</a><br>
+        &nbsp;<br>
+        <strong>List</strong>
+        <hr>
+        <a href="{{ url_for('checklist.index') }}">All lists</a><br>
+        <a href="{{ url_for('checklist.create') }}">Create new list</a><br>
+        &nbsp;<br>
+        <strong>Settings</strong>
+        <hr>
+        <a href="{{ url_for('admin.edit_user', id=g.user['id']) }}">User</a><br>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <form action="" method="post">
-        <h2>Create a Checklist</h2>
-        <p>Use this form to create a new checklist:</p>
-        <label for="list_title">Title: </label>
-        <input type="text" name="list_title" id="list_title" required><br>
-        <label for="list_description">Description: </label>
-        <input type="text" name="list_description" id="list_description"><br>
-        <input type="submit" value="Save">
-        <input type="reset" value="Cancel">
-    </form>
+    <div class="content">
+        <form action="" method="post">
+            <h2>Create a Checklist</h2>
+            <p>Use this form to create a new checklist:</p>
+            <label for="list_title">Title: </label>
+            <input type="text" name="list_title" id="list_title" value="{% if header %}{{ header['title'] }}{% endif %}" required"><br>
+            &nbsp;<br>
+            <label for="list_description">Description: </label>
+            <textarea name="list_description" id="list_description" cols="30" rows="10">{% if header %}{{ header['description'] }}{% endif %}</textarea><br>
+            &nbsp;<br>
+            <input type="submit" value="Save">
+            <input type="reset" value="Cancel">
+        </form>
+    </div>
 {% endblock %}

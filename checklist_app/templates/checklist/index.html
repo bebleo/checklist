@@ -1,25 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
-        <h2>Checklists</h2>
-        <p>Use this form to create a new checklist:</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Date</th>
-                    <th>Complete</th>
-                </tr>
-            </thead>
-            <tbody>
-{% for list in lists %}
-{% set per_complete = '{:.0%}'.format(list.percent_complete()) %}
-                <tr>
-                    <td><a href="{{ url_for('checklist.view', id=list.header['id']) }}">{{ list.header['title'] }}</a></td>
-                    <td>{{ list.header['created_date'].strftime('%Y-%m-%d') }}</td>
-                    <td>{% if list.header['is_complete'] %}&#10004;{% else %}{{ per_complete }}{% endif %}</td>
-                </tr>
-{% endfor %}            
-            </tbody>
-        </table>
+        <div>
+            <h2>Checklists</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Complete</th>
+                    </tr>
+                </thead>
+                <tbody>
+    {% for list in lists %}
+    {% set per_complete = '{:.0%}'.format(list.percent_complete()) %}
+                    <tr>
+                        <td><a href="{{ url_for('checklist.view', id=list.header['id']) }}">{{ list.header['title'] }}</a></td>
+                        <td>{{ list.header['created_date'].strftime('%Y-%m-%d') }}</td>
+                        <td>{% if list.header['is_complete'] %}&#10004;{% else %}{{ per_complete }}{% endif %}</td>
+                    </tr>
+    {% endfor %}            
+                </tbody>
+            </table>
+        </div>
 {% endblock %}

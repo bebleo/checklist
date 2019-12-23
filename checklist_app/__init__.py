@@ -8,14 +8,15 @@
 
 import os
 
-from flask import Flask
+from flask import Flask, logging
 from flask_mail import Mail
 
 from . import admin, auth, db, home, checklist
 
 def create_app(test_config=None):
     """Creates the flask app and initilizes the instance folder
-        as necessary."""
+    as necessary.
+    """
     app = Flask(__name__, instance_relative_config=True)
 
     app.config.from_mapping(
@@ -35,7 +36,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Wireup the database and mail.
+    # Wireup the database.
     db.init_app(app)
 
     # Register BluePrints
