@@ -9,7 +9,7 @@ from flask import (abort, Blueprint, current_app, flash, g, redirect, render_tem
                    request, url_for)
 from werkzeug.security import generate_password_hash
 
-from checklist_app.auth import admin_required
+from checklist_app.auth import admin_required, login_required
 from checklist_app.db import get_db
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -66,7 +66,7 @@ def list_users():
     return render_template('admin/users.html', users=users)
 
 @bp.route('/users/<int:id>', methods=('GET', 'POST'))
-@admin_required
+@login_required
 def edit_user(id: int):
     """
     Edit the user with the id.
@@ -80,6 +80,12 @@ def edit_user(id: int):
         # ID doesn't exist in the database so return
         # page not found.
         abort(404)
+
+    # If the user isn't an admin check that the user id matches the logged in user.
+    # If not then abort the request with a 401-Unauthorized error
+    if not user['is_admin']:
+        if user['id'] != g.user['id']:
+            abort(401)
 
     if request.method is 'POST':
         username = request.form['username'].strip()
