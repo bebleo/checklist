@@ -95,9 +95,11 @@ textarea {
 .footer {
     color: gray;
     max-width: 1000px;
-    font-size: smaller;
-    padding: 8px;
-    border-top: 1px solid darkgray;
+    margin: 2em auto;
+}
+.bebleo {
+    color: darkorange;
+    font-weight: bold;
 }
 .footer::after {
     display: block;

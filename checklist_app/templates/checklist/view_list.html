@@ -5,6 +5,7 @@
         <strong>Tasks</strong>
         <hr>
         <a href="/">Mark complete</a><br>
+        <a href="{{ url_for('checklist.edit', id=checklist.header['id']) }}">Edit</a><br>
         <a href="/">Delete</a><br>
         &nbsp;<br>
         <strong>List</strong>
@@ -19,7 +20,6 @@
 {% endblock %}
 
 {% block content %}
-    <div class="content">
         <script>
             // Redirects when the checkbox is clicked.
             function redirect(url) {
@@ -52,5 +52,4 @@
     {% endfor %}
             </ol>
         </div>
-    </div>
 {% endblock %}

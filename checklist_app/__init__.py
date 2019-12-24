@@ -11,7 +11,8 @@ import os
 from flask import Flask, logging
 from flask_mail import Mail
 
-from . import admin, auth, db, home, checklist
+from . import admin, auth, checklist, db, home
+
 
 def create_app(test_config=None):
     """Creates the flask app and initilizes the instance folder
@@ -22,11 +23,19 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='<unsafe_secret_k3y/>',
         DATABASE=os.path.join(app.instance_path, 'checklist.sqlite3'),
+        MAIL_SERVER='localhost',
+        MAIL_USERNAME='',
+        MAIL_PASSWORD='',
+        MAIL_PORT=25,
+        MAIL_USE_SSL=False,
+        MAIL_USE_TLS=False,
+        MAIL_SENDER='',
+        MAIL_SUPPRESS_SEND=True
     )
 
     # Load altenative mappings as necessary
     if test_config is None:
-        app.config.from_pyfile('config.py', silent=True)
+        app.config.from_pyfile('config.py', silent=True, )
     else:
         app.config.from_mapping(test_config)
 

@@ -13,8 +13,8 @@ def favicon():
     filename = 'favicon.ico'
     return send_from_directory(path, filename)
 
-@bp.route('/')
 @bp.route('/index')
+@bp.route('/')
 def index():
     """returns the home page"""
     return render_template('home/index.html')
