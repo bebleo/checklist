@@ -10,6 +10,7 @@ It's also an opportunity to work in python and to experiment with:
 
 - Flask
 - Flask-Mail
+- Flask-WTF
 
 Users may notice that a lot of the material in the site derives heavily from the Flask tutorial. This is freely and gratefully acknowledged.
 
@@ -17,7 +18,7 @@ Users may notice that a lot of the material in the site derives heavily from the
 
 The checklist site can be run using the built-in Flask development server for the first-time by:
 
-```(shell)
+```shell
 export FLASK_ENV=development
 export FLASK_APP=checklist_app
 flask init-db
@@ -26,7 +27,7 @@ flask run
 
 Or, on windows:
 
-```(shell)
+```shell
 set FLASK_ENV=development
 set FLASK_APP=checklist_app
 flask init-db
