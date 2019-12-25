@@ -38,9 +38,12 @@ def user_by_username(username=None, id=None):
     if id:
         variable = "id"
         values = (id, )
-    else:
+    elif username:
         variable = 'email'
         values = (username, )
+    else:
+        current_app.logger.Error('No argument supplied to fetch user from db.')
+        raise ValueError("No username or id supplied to get user.")
 
     user = db.execute(
         f'SELECT * FROM users WHERE {variable} = ?',
@@ -68,11 +71,7 @@ def list_users():
 @bp.route('/users/<int:id>', methods=('GET', 'POST'))
 @login_required
 def edit_user(id: int):
-    """
-    Edit the user with the id.
-
-    :param id: the id for the user.
-    """
+    """Edit the user with the id."""
     user = user_by_username(id=id)
     saved = False
 
@@ -83,11 +82,12 @@ def edit_user(id: int):
 
     # If the user isn't an admin check that the user id matches the logged in user.
     # If not then abort the request with a 401-Unauthorized error
-    if not user['is_admin']:
+    if not g.user['is_admin']:
+        current_app.logger.debug(f"user with id {g.user['id']} is editing user with id {user['id']}.")
         if user['id'] != g.user['id']:
             abort(401)
 
-    if request.method is 'POST':
+    if request.method == 'POST':
         username = request.form['username'].strip()
         given_name = request.form['given_name'].strip()
         family_name = request.form['family_name'].strip()
