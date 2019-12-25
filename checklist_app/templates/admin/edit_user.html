@@ -4,6 +4,7 @@
 {% block content %}
     {{ success_message('Success: The user has been saved.', success)}}
     <form action="" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <h2>Edit User</h2>
         <label for="username">Username: </label>
         <input type="email" name="username" id="username" value="{{ user['email'] }}"><br>

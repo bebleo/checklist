@@ -10,9 +10,11 @@ import os
 
 from flask import Flask, logging
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect
 
 from . import admin, auth, checklist, db, home
 
+csrf = CSRFProtect()
 
 def create_app(test_config=None):
     """Creates the flask app and initilizes the instance folder
@@ -45,8 +47,9 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Wireup the database.
+    # Wireup the database and csrf
     db.init_app(app)
+    csrf.init_app(app)
 
     # Register BluePrints
     app.register_blueprint(auth.bp)

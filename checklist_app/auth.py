@@ -140,7 +140,7 @@ def register():
 
         if error is None:
             # Insert the user into database
-            cur = db.Cursor()
+            cur = db.cursor()
             cur.execute(
                 'INSERT INTO users (email, given_name, family_name, password) VALUES (?, ?, ?, ?);', 
                 (username, given_name, family_name, generate_password_hash(password), ))
