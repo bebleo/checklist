@@ -28,3 +28,8 @@ def about():
 def contact():
     """Contact us page."""
     return render_template('home/contact.html')
+
+@bp.route('/privacy')
+def privacy():
+    """Privacy policy page."""
+    return render_template('home/privacy_policy.html')
