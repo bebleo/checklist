@@ -8,7 +8,7 @@
 
 import os
 
-from flask import Flask, logging
+from flask import Flask
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 

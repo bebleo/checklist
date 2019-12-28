@@ -42,7 +42,7 @@ def user_by_username(username=None, id=None):
         variable = 'email'
         values = (username, )
     else:
-        current_app.logger.Error('No argument supplied to fetch user from db.')
+        current_app.logger.error('No argument supplied to fetch user from db.')
         raise ValueError("No username or id supplied to get user.")
 
     user = db.execute(
@@ -76,8 +76,7 @@ def edit_user(id: int):
     saved = False
 
     if not user:
-        # ID doesn't exist in the database so return
-        # page not found.
+        # ID doesn't exist in the database so return 404-Page Not Found.
         abort(404)
 
     # If the user isn't an admin check that the user id matches the logged in user.
@@ -136,7 +135,7 @@ def add_user():
         given_name = request.form['given_name'].strip()
         family_name = request.form['family_name'].strip()
         password = request.form['password'].strip()
-        confirm = request.form['password'].strip()
+        confirm = request.form['confirmed'].strip()
         is_admin = checked('is_admin')
 
         error = None
@@ -144,7 +143,7 @@ def add_user():
 
         if user_check:
             # Username already in use.
-            error = f"Username already exists. <a href=\"{url_for('admin.edit_user', id=user_check['id'])}\">Click to edit</a>"
+            error = f"Username already exists. <a href=\"{url_for('admin.edit_user', id=user_check['id'])}\">Edit</a>"
         elif password != confirm:
             error = "Password and confirmation must match"
 

@@ -33,19 +33,20 @@ def send_password_change():
             'SELECT * FROM users WHERE email = ?',
             (email, )
         ).fetchone()
-        db.execute(
-            'INSERT INTO password_tokens (user_id, token, token_type) VALUES (?, ?, ?)',
-            (user['id'], token, 'password_reset')
-        )
-        db.commit()
 
         if not user:
             flash("No user found with email.")
         else:
+            db.execute(
+                'INSERT INTO password_tokens (user_id, token, token_type) VALUES (?, ?, ?)',
+                (user['id'], token, 'password_reset')
+            )
+            db.commit()
+
             mail = Mail(current_app)
             mail.send_message(subject='Reset Password Link',
                               recipients=[user['email']],
-                              sender='Bebleo <bebleo@mail.localhost>',
+                              sender='Bebleo <noreply@bebleo.url>',
                               body=render_template('emails/send_password_change.txt',
                                                    host=request.host, 
                                                    user=user, 
@@ -90,13 +91,13 @@ def forgot_password(token = None):
 
         if password == confirm:
             password_hash = generate_password_hash(password)
-            user_id = token['user_id']
+            user_id = t['user_id']
             db.execute(
                 'UPDATE users SET password = ? WHERE id = ?',
                 (password_hash, user_id))
             db.execute(
                 'DELETE FROM password_tokens WHERE id = ?',
-                (token['id'], ))
+                (t['id'], ))
             user = db.execute(
                 'SELECT * FROM users WHERE id = ?;',
                 (user_id, )).fetchone()
@@ -105,7 +106,7 @@ def forgot_password(token = None):
             mail = Mail(current_app)
             mail.send_message(subject='Password reset',
                                recipients=[user['email']],
-                               sender='james.warne@outlook.com',
+                               sender='Bebleo <noreply@bebleo.url>',
                                body=render_template('emails/password_reset.txt', user=user))
             current_app.logger.info('Password reset for user with id {}.'.format(user_id))
             return redirect(url_for('home.index'))
@@ -158,6 +159,7 @@ def register():
 def login():
     """Login."""
     session.pop('_flashes', None)
+    current_app.logger.info('Login called')
 
     if request.method == 'POST':
         username = request.form['username']
@@ -169,10 +171,12 @@ def login():
             (username.strip(), )
         ).fetchone()
 
-        if not username.strip():
+        current_app.logger.debug(f'Login request for {username} with {password} as password received.')
+
+        if not username:
             error = 'Username cannot be empty.'
-        elif not password.strip():
-            error = 'Passowrd cannot be blank.'
+        elif not password:
+            error = 'Password cannot be blank.'
         elif (user is None) or (not check_password_hash(user['password'], password)):
             error = 'Login incorrect, please try again.'
         

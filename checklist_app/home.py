@@ -17,6 +17,10 @@ def favicon():
 @bp.route('/')
 def index():
     """returns the home page"""
+    if g.user:
+        current_app.logger.debug(f"{g.user['id']} has called the index page.")
+    else:
+        current_app.logger.debug("No user present for this page.")
     return render_template('home/index.html')
 
 @bp.route('/about')
