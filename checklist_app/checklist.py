@@ -116,6 +116,7 @@ def edit(id):
     return render_template('checklist/create.html', header=checklist.header)
 
 @bp.route('/')
+@bp.route('')
 @login_required
 def index():
     db = get_db()

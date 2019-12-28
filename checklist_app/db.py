@@ -35,7 +35,7 @@ def close_db(e=None):
 def init_db():
     """Initializes the database."""
     db = get_db()
-    current_app.logger.debug('initializing database.')
+    current_app.logger.debug('Initializing database.')
 
     with current_app.open_resource('schemas/schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
