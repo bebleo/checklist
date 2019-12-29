@@ -70,10 +70,29 @@ def test_unmark_item_done(app, client, auth):
         item = db.execute("SELECT * FROM checklist_items WHERE id = 4").fetchone()
         assert not item['done']
 
-@pytest.mark.xfail()
-def test_delete_checklist(client, auth):
-    # Delete not yet implemented so this test will always fail.
-    assert 0
+def test_delete_checklist(app, client, auth):
+    with app.app_context():
+        db = get_db()
+        auth.login()
+
+        # Get the form and make sure the message displays
+        response = client.get('/checklist/delete/1', follow_redirects=True)
+        assert b'Delete' in response.data
+
+        # Simulate clicking the button and check that the form is deleted
+        data = {
+            "confirm_delete": "1"
+        }
+        response = client.post('/checklist/delete/1', data=data)
+        # redirects to the listing
+        assert response.status_code == 302
+        assert '/checklist' in response.headers['Location']
+        # check that the changes have been made
+        _list = db.execute("SELECT * FROM checklists WHERE id = 1").fetchone()
+        assert _list['is_deleted']
+        history = db.execute("SELECT * FROM checklist_history WHERE checklist_id = 1 ORDER BY id DESC LIMIT 1").fetchone()
+        assert 'deleted' in history['change_description']
+
 
 @pytest.mark.parametrize("path", login_required['get'])
 def test_get_login_required(client, path):

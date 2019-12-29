@@ -32,6 +32,7 @@ CREATE TABLE checklists (
     title TEXT NOT NULL,
     description TEXT,
     is_complete BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
     created_by INTEGER NOT NULL,
     assigned_to INTEGER NOT NULL,
     FOREIGN KEY (created_by) REFERENCES users (id),

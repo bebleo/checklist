@@ -1,5 +1,6 @@
 from flask import (Blueprint, abort, current_app, flash, g, logging, redirect,
                    render_template, request, url_for)
+from flask_wtf.csrf import generate_csrf
 
 from checklist_app.auth import login_required
 from checklist_app.db import get_db
@@ -115,14 +116,63 @@ def edit(id):
             
     return render_template('checklist/create.html', header=checklist.header)
 
+@bp.route('/delete/<int:id>', methods=('GET', 'POST'))
+@login_required
+def delete(id):
+    """Mark the checklist identified by the id as deleted."""
+    db = get_db()
+    checklist = get_checklist(id)
+
+    if checklist is None:
+        abort(404)
+
+    if request.method == 'POST':
+        # Check that the confirmation has been given and return.
+        confirm_delete = request.form['confirm_delete']
+
+        if not confirm_delete:
+            abort(401)
+
+        # TODO Handle the actual deletion.
+        db.execute("UPDATE checklists SET is_deleted = ? WHERE id = ?", (True, id,))
+        db.execute(
+            """INSERT INTO checklist_history
+                   (change_description, checklist_id, user_id)
+               VALUES
+                   (?, ?, ?);
+            """,
+            (
+                f"{g.user['given_name']} deleted the \"{checklist.header['title']}\" checklist.",
+                id,
+                g.user['id']
+            )
+        )
+        db.commit()
+
+        # redirect the user to their list of checklists.
+        return redirect(url_for('checklist.index'))
+        
+
+    # Create a little confirmation form and return it as a message
+    confirm = f"""
+        <form action="{url_for('checklist.delete', id=id)}" method="post">
+        Please click the button to confirm that you want to delete this form. This action cannot be undone.
+        <input type="hidden" name="csrf_token" value="{generate_csrf()}">
+        <input type="hidden" name="confirm_delete" id="confirm_delete" value="1">
+        <input type="submit" value="Delete">
+        </form>
+    """
+    flash(confirm)
+    return redirect(url_for('checklist.view', id=id))
+
 @bp.route('/')
 @bp.route('')
 @login_required
 def index():
     db = get_db()
     checklists = [get_checklist(r['id']) for r in db.execute(
-        'SELECT id FROM checklists WHERE created_by = ?',
-        (g.user['id'], )
+        'SELECT id FROM checklists WHERE created_by = ? AND is_deleted = False',
+        (g.user['id'],)
     ).fetchall()]
 
     return render_template('checklist/index.html', lists=checklists)
