@@ -10,7 +10,7 @@ test_add_user_data = [
             "given_name": "User",
             "family_name": "Bebleo",
             "password": "password",
-            "confirmed": "password",
+            "confirm": "password",
             "is_admin": ""
         },
         b'Success',
@@ -23,7 +23,7 @@ test_add_user_data = [
             "given_name": "User",
             "family_name": "Bebleo",
             "password": "password",
-            "confirmed": "password",
+            "confirm": "password",
             "is_admin": ""
         },
         b'Username already exists',
@@ -36,7 +36,7 @@ test_add_user_data = [
             "given_name": "Admin",
             "family_name": "Bebleo",
             "password": "password",
-            "confirmed": "password",
+            "confirm": "password",
             "is_admin": "checked"
         },
         b'Success',
@@ -148,7 +148,7 @@ def test_add_user_mismatched_passwords(client, auth):
         "given_name": "Mismatched",
         "family_name": "Bebleo",
         "password": "password",
-        "confirmed": "not_password",
+        "confirm": "not_password",
         "is_admin": ""
     }
     expected = b'Password and confirmation must match'

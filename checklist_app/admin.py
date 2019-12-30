@@ -135,7 +135,7 @@ def add_user():
         given_name = request.form['given_name'].strip()
         family_name = request.form['family_name'].strip()
         password = request.form['password'].strip()
-        confirm = request.form['confirmed'].strip()
+        confirm = request.form['confirm'].strip()
         is_admin = checked('is_admin')
 
         error = None
