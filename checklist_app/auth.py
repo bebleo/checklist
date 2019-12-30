@@ -159,7 +159,6 @@ def register():
 def login():
     """Login."""
     session.pop('_flashes', None)
-    current_app.logger.info('Login called')
 
     if request.method == 'POST':
         username = request.form['username']
@@ -170,8 +169,6 @@ def login():
             'SELECT * FROM users WHERE email = ?', 
             (username.strip(), )
         ).fetchone()
-
-        current_app.logger.debug(f'Login request for {username} with {password} as password received.')
 
         if not username:
             error = 'Username cannot be empty.'
