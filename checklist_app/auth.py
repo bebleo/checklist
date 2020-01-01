@@ -118,6 +118,10 @@ def forgot_password(token = None):
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     """Return the form to register the user and handle the response."""
+    if g.user is not None:
+        # There's a logged in user so no legitmate reason to register.
+        abort(401)
+
     if request.method == 'POST':
         username = request.form['username'].strip()
         given_name = request.form['given_name'].strip()
