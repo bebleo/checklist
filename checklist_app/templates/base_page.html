@@ -1,0 +1,13 @@
+{# Base template for static pages #}
+{% extends 'base.html' %}
+
+{% block container %}
+    <div class="container no-sidebar">
+        {% for message in get_flashed_messages() %}
+            <div class="messages">
+                {{ message|safe }}
+            </div>
+        {% endfor %}
+        {% block content %}{% endblock %}
+    </div>
+{% endblock %}

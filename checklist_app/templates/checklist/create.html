@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_form.html' %}
 
 {% block sidebar %}
     <div class="sidebar">
@@ -16,7 +16,7 @@
         <hr>
         <a href="{{ url_for('admin.edit_user', id=g.user['id']) }}">User</a><br>
     </div>
-{% endblock %}
+{% endblock sidebar %}
 
 {% block content %}
         <form action="" method="post">
@@ -32,4 +32,4 @@
             <input type="submit" value="Save">
             <input type="reset" value="Cancel">
         </form>
-{% endblock %}
+{% endblock content %}

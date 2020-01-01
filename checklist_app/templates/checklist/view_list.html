@@ -1,4 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'base_form.html' %}
+
+{% block title %}{{ checklist.header['title'] }}{% endblock %}
 
 {% block sidebar %}
     <div class="sidebar">
@@ -6,7 +8,7 @@
         <hr>
         <a href="/">Mark complete</a><br>
         <a href="{{ url_for('checklist.edit', id=checklist.header['id']) }}">Edit</a><br>
-        <a href="/">Delete</a><br>
+        <a href="{{ url_for('checklist.delete', id=checklist.header['id'] )}}">Delete</a><br>
         &nbsp;<br>
         <strong>List</strong>
         <hr>

@@ -1,0 +1,23 @@
+{# Base template for pages that display a form. #}
+
+{% extends 'base.html' %}
+{% from 'macros.html' import success_message %}
+
+{% block container %}
+    <div class="container">
+        {% block sidebar %}
+        <div class="sidebar">
+
+        </div>
+        {% endblock %}
+        <div class="content">
+        {% for message in get_flashed_messages() %}
+            <div class="messages">
+                {{ message|safe }}
+            </div>
+        {% endfor %}
+        {{ success_message('Success: The user has been saved.', success)}}
+        {% block content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
