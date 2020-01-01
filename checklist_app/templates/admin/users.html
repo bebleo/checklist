@@ -1,14 +1,31 @@
-{% extends 'base.html' %}
+{% extends 'base_list.html' %}
+
+{% block title %}Users{% endblock %}
+
+{% block sidebar %}
+    <div class="sidebar">
+        <strong>Tasks</strong>
+        <hr>
+        &nbsp;<br>
+        <strong>List</strong>
+        <hr>
+        <a href="{{ url_for('checklist.index') }}">All lists</a><br>
+        <a href="{{ url_for('checklist.create') }}">Create new list</a><br>
+        &nbsp;<br>
+        <strong>Settings</strong>
+        <hr>
+        <a href="{{ url_for('admin.edit_user', id=g.user['id']) }}">User</a><br>
+    </div>
+{% endblock sidebar %}
 
 {% block content %}
     <h2>Users</h2>
     <div id="actions" class="actions">
-        <p><strong>Actions: </strong><a href="{{ url_for('admin.add_user') }}">Add New*</a></p>
+        <p><strong>Actions: </strong><a href="{{ url_for('admin.add_user') }}">Add New</a></p>
     </div>
     <table>
         <thead>
             <tr>
-                <th>Admin</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Actions</th>
@@ -17,12 +34,12 @@
         <tbody>
 {% for user in users %}
             <tr>
-                <td>{% if user['is_admin'] %}&bull;{% endif %}</td>
-                <td>{{ user['given_name'] }} {{ user['family_name'] }}</td>
+                <td>{{ user['given_name'] }} {{ user['family_name'] }}{% if user['is_admin'] %}&nbsp;&bull;{% endif %}</td>
                 <td>{{ user['email'] }}</td>
                 <td><a href="{{ url_for('admin.edit_user', id=user['id']) }}">Edit</a></td>
             </tr>
 {% endfor %}
         </tbody>
     </table>
-{% endblock%}
+    <p><strong>Note: </strong>Administrators are denoted by the &bull; symbol after their name.</p>
+{% endblock %}

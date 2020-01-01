@@ -3,7 +3,7 @@
 {% macro success_message(msg, show=False) %}
 {% if show %}
     <div class="notice">
-        <p>{{ msg }}</p>
+        {{ msg }}
     </div>
 {% endif %}
 {% endmacro %}

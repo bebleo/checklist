@@ -9,6 +9,29 @@ body {
     font-family: Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
 }
+table {
+    width: 100%;
+    background-color: white;
+    border-collapse: collapse;
+}
+th {
+    text-align: left;
+    border: 1px solid darkslategray;
+    padding: 0.5em;
+}
+th:last-of-type {
+    text-align: right;
+}
+td {
+    border: 1px solid darkslategray;
+    padding: 0.5em;
+}
+td:last-of-type {
+    text-align: right;
+}
+.no-sidebar {
+    display: block !important;
+}
 div.container {
     text-align: auto;
     max-width: 1000px;
@@ -41,22 +64,10 @@ label {
     clear: none;
     display: initial;
 }
-input[type=text] {
-    width: 100%;
-}
 .inline-form input[type=text] {
     flex: 1;
     margin-right: 0.5em;
     margin-left: 0.5em;
-}
-input[type=email] {
-    width: 50%;
-}
-input[type=password] {
-    width: 50%;
-}
-textarea {
-    width: 100%;
 }
 .beta::after {
     content: " beta";
@@ -126,10 +137,11 @@ textarea {
     display: inline-block;
 }
 .notice {
-    border: 1px solid darkblue;
-    background-color: white;
-    border-radius: 2px;
+    border: 1px solid darkslateblue;
+    background-color: aliceblue;
+    border-radius: 3px;
     padding: 0.5em;
+    margin-top: 24px;
 }
 .logo {
     width: 50%;
@@ -171,7 +183,12 @@ nav > li {
 .content {
     background-color: white;
     border: 1px solid grey;
-    padding: 0 24px 24px 24px;
+    padding:  0 24px 24px 24px;
+    flex: 1;
+    min-width: 300px;
+}
+.content-list {
+    padding: 0 0 24px;
     flex: 1;
     min-width: 300px;
 }
@@ -181,6 +198,7 @@ nav > li {
     padding: 0.5em;
     clear: right;
     flex: 1;
+    margin-top: 24px;
 }
 .subtitle {
     font-size: 80%;
@@ -200,7 +218,48 @@ nav > li {
     font-size: small;
     background-color: rgb(217, 240, 255);
 }
-.width-50 {
-    width: 50%;
-    /* max-width: 300px; */
+.page-form {
+    margin: 0 auto;
+    max-width: 400px;
+    background-color: white;
+    border: 1px solid grey;
+    padding:  0 24px 24px 24px;
+    margin-top: 24px;
+}
+label {
+    padding: 0.25em 0;
+}
+.width-50 input[type=email], 
+.width-50 input[type=password] {
+    width: 50%; /* !important;*/
+}
+input[type=email], 
+input[type=text], 
+input[type=password], 
+textarea {
+    width: 100%;
+    padding: 5px 2px;
+    box-sizing: border-box;
+}
+input {
+    font-size: inherit;
+}
+textarea {
+    font-size: 16px;
+}
+.btn-primary {
+    background-color: #007bff;
+    border: 1px solid steelblue;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.btn-secondary {
+    background-color: white;
+    border: 1px solid steelblue;
+    color: steelblue;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
 }

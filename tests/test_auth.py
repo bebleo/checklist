@@ -107,6 +107,11 @@ def test_register(client, registration_info, expected):
     response = client.post('/auth/register', data=registration_info)
     assert expected in response.data
 
+def test_register_already_logged_in(client, auth):
+    auth.login()
+    response = client.get('/auth/register')
+    assert response.status_code == 401
+
 def test_get_login(client):
     response = client.get('/auth/login')
     assert b'Register' in response.data

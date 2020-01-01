@@ -1,0 +1,17 @@
+{# Base template for pages that display a list #}
+{% extends 'base.html' %}
+{% block container %}
+    <div class="container">
+    {% block sidebar %}
+    <div class="sidebar"></div>
+    {% endblock %}
+        <div class="content-list">
+        {% for message in get_flashed_messages() %}
+            <div class="messages">
+                {{ message|safe }}
+            </div>
+        {% endfor %}
+        {% block content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}

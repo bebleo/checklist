@@ -1,18 +1,20 @@
-{% extends 'base.html' %}
+{% extends 'base_page.html' %}
 
 {% block content %}
-    <form action="{{ url_for('auth.login') }}" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <h2>Login</h2>
-        <label for="username">email: </label>
-        <input type="email" name="username" id="username" required><br>
-        <label for="password">password: </label>
-        <input type="password" name="password" id="password" required><br>
-        &nbsp;<br>
-        <input type="checkbox" name="remember" id="remember">Remember login</input><br>
-        <!-- <label for="remember">Remember login?</label> -->
-        &nbsp;<br>
-        <input type="submit" value="Login">
-    </form>
-    <p><a href="{{ url_for('auth.send_password_change') }}">Forgot Password</a> or <a href="{{ url_for('auth.register') }}">Register</a></p>
+    <div class="page-form">
+        <form action="{{ url_for('auth.login') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <h2>Login</h2>
+            <label for="username">Email: </label>
+            <input type="email" name="username" id="username" placeholder="email" required><br>
+            <label for="password">Password: </label>
+            <input type="password" name="password" id="password" placeholder="password" required><br>
+            &nbsp;<br>
+            <input type="checkbox" name="remember" id="remember">Remember login</input><br>
+            <!-- <label for="remember">Remember login?</label> -->
+            &nbsp;<br>
+            <input type="submit" value="Login" class="btn-primary">
+        </form>
+        <p><a href="{{ url_for('auth.send_password_change') }}">Forgot Password</a> or <a href="{{ url_for('auth.register') }}">Register</a></p>
+    </div>
 {% endblock %}

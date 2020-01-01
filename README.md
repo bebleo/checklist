@@ -1,6 +1,6 @@
 # checklist
 
-Checklist should be considered a proof-of-concept for a solution that allows users to create, update, and delete lists and to track the changes that are made. As such the aim is not to produce a production-ready site. If you're looking for one we suggest searching for a production ready site.
+Checklist should be considered a proof-of-concept for a solution that allows users to create, update, and delete lists and to track the changes that are made. As such the aim is not to produce a production-ready site. If you're looking for one, I suggest searching for something else.
 
 ## Introduction
 
@@ -16,7 +16,13 @@ Users may notice that a lot of the material in the site derives heavily from the
 
 ### Running the Sample
 
-The checklist site can be run using the built-in Flask development server for the first-time by:
+The checklist site can be run using the built-in Flask development server for the first-time byby setting up a virtual environment and installing the depencies. To install it in the current directory:
+
+```shell
+pip install -e .
+```
+
+You will then be able to initialize the database and run the application:
 
 ```shell
 export FLASK_ENV=development
