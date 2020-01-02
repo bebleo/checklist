@@ -127,6 +127,12 @@ def test_post_login(client, username, password, expected):
     response = client.post('/auth/login', data={"username": username, "password": password})
     assert response.status_code == expected
 
+def test_post_login_diabled_user(client):
+    """If a disabled user attempts to login direct them to the account disabled page."""
+    response = client.post('/auth/login', data={"username": "disabled@bebleo.url", "password": "test"})
+    assert response.status_code == 302
+    assert '/auth/disabled' in response.headers['Location']
+
 def test_logout(client):
     response = client.get('/auth/logout')
     assert response.status_code == 302

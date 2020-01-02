@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash
 
 from checklist_app.auth import admin_required, login_required
 from checklist_app.db import get_db
+from checklist_app.models.user import get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -72,7 +73,7 @@ def list_users():
 @login_required
 def edit_user(id: int):
     """Edit the user with the id."""
-    user = user_by_username(id=id)
+    user = get_user(id=id)
     saved = False
 
     if not user:
@@ -91,9 +92,11 @@ def edit_user(id: int):
         given_name = request.form['given_name'].strip()
         family_name = request.form['family_name'].strip()
         is_admin = checked('is_admin')
+        account_flag = checked('account_flag')
 
         db = get_db()
         error = None
+        deactivated = request.form['account_flag'] if account_flag else 0
 
         if not username:
             error = 'Username must not be blank.'
@@ -101,7 +104,9 @@ def edit_user(id: int):
             # Make it impossible to remove oneself as an admin.
             # This ensures that there is always at least on admin.
             if user['is_admin'] and not is_admin:
-                error = 'Cannot remove admin rights from own account.' 
+                error = 'Cannot remove admin rights from your own account.'
+            elif account_flag:
+                error = "Cannot deactivate your own account."
 
         if error:
             flash(error)
@@ -111,17 +116,21 @@ def edit_user(id: int):
                       email = ?,
                       given_name = ?, 
                       family_name = ?, 
-                      is_admin = ? 
+                      is_admin = ?, 
+                      deactivated = ?
                    WHERE 
                       id = ?
                 """, 
-                (username, given_name, family_name, is_admin, id)
+                (username, given_name, family_name, is_admin, deactivated, id)
             )
             user = user_by_username(id=id)
             db.commit()
             saved = True
 
     return render_template('admin/edit_user.html', user=user, success=saved)
+
+def validate_password(password_field='password', confirmation_field='confirm'):
+    return request.form[password_field] == request.form[confirmation_field]
 
 @bp.route('/users/new', methods=('GET', 'POST'))
 @admin_required
@@ -139,7 +148,10 @@ def add_user():
         is_admin = checked('is_admin')
 
         error = None
-        user_check = user_by_username(username=username)
+        user_check = get_user(username=username)
+
+        password_confirm = validate_password()
+        current_app.logger.debug(f'passwords match: {password_confirm}')
 
         if user_check:
             # Username already in use.

@@ -16,8 +16,32 @@ from flask_mail import Mail
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from checklist_app.db import get_db
+from checklist_app.models.user import AccountStatus, get_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+def login_required(view):
+    @functools.wraps(view)
+    def check_login(**kwargs):
+        if g.user is None:
+            return redirect(url_for('auth.login'))
+        elif g.user['deactivated']:
+            return redirect(url_for('auth.deactivated'))
+
+        return view(**kwargs)
+
+    return check_login
+
+def admin_required(view):
+    @functools.wraps(view)
+    @login_required
+    def check_admin(**kwargs):
+        if not g.user['is_admin']:
+            abort(401)
+        
+        return view(**kwargs)
+
+    return check_admin
 
 @bp.route('/forgotpassword', methods=('GET', 'POST'))
 def send_password_change():
@@ -27,16 +51,16 @@ def send_password_change():
 
     if request.method == 'POST':
         email = request.form['username']
-        db = get_db()
 
-        user = db.execute(
-            'SELECT * FROM users WHERE email = ?',
-            (email, )
-        ).fetchone()
+        if email:
+            # Provided an email is sent attempt to get the user from the database.
+            user = get_user(username=email)
 
-        if not user:
+        if user is None:
+            # If no user exists with that email flash that message.
             flash("No user found with email.")
         else:
+            db = get_db()
             db.execute(
                 'INSERT INTO password_tokens (user_id, token, token_type) VALUES (?, ?, ?)',
                 (user['id'], token, 'password_reset')
@@ -167,12 +191,8 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        db = get_db()
         error = None
-        user = db.execute(
-            'SELECT * FROM users WHERE email = ?', 
-            (username.strip(), )
-        ).fetchone()
+        user = get_user(username)
 
         if not username:
             error = 'Username cannot be empty.'
@@ -181,7 +201,9 @@ def login():
         elif (user is None) or (not check_password_hash(user['password'], password)):
             error = 'Login incorrect, please try again.'
         
-        if not error:
+        if user['deactivated']:
+            return redirect(url_for('auth.deactivated'))
+        elif not error:
             session.clear()
             session['user_id'] = user['id']
             return redirect(url_for('home.index'))
@@ -199,34 +221,13 @@ def logout():
 @bp.before_app_request
 def fetch_logged_in_user():
     user_id = session.get('user_id')
+    g.user = get_user(id=user_id) if user_id else None
 
-    if user_id is None:
-        g.user = None
-    else:
-        db = get_db()
-        g.user = db.execute(
-            'SELECT * FROM users WHERE id = ?',
-            (user_id, )
-        ).fetchone()
+@bp.route('/disabled', methods=('GET', 'POST'))
+def deactivated():
+    """Returns the account disabled page."""
+    if g.user:
+        if not g.user['deactivated']:
+            return redirect(url_for('home.index'))
 
-def login_required(view):
-    @functools.wraps(view)
-    def check_login(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-
-        return view(**kwargs)
-
-    return check_login
-
-def admin_required(view):
-    @functools.wraps(view)
-    def check_admin(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-        elif not g.user['is_admin']:
-            abort(401)
-        
-        return view(**kwargs)
-
-    return check_admin
+    return render_template('auth/account_disabled.html')

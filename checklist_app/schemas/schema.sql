@@ -14,6 +14,7 @@ CREATE TABLE users (
     given_name TEXT,
     family_name TEXT,
     is_admin BOOLEAN DEFAULT FALSE,
+    deactivated INTEGER NOT NULL DEFAULT 0,
     password TEXT NOT NULL,
     row_version TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

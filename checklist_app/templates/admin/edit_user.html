@@ -32,10 +32,28 @@
         <label for="family_name">Family name: </label>
         <input type="text" name="family_name" id="family_name" value="{{ user['family_name'] }}"><br>
         {% if g.user['is_admin'] %}
-        <input type="checkbox" name="is_admin" id="is_admin" {% if user['is_admin'] %}checked{% endif %}>
-        <label for="is_admin">is administrator</label><br>
+        &nbsp;<br>
+        <input type="checkbox" name="is_admin" id="is_admin" {% if user['is_admin'] %}checked{% endif %}>Administrator<br>
+        &nbsp;<br>
+        <fieldset>
+            <legend>Account Flags</legend> 
+            <input type="checkbox" name="account_flag" id="account_disabled" onclick="CheckboxGroup(this)" value="1" {% if user['deactivated'] == 1 %}checked{% endif %}>Deactivate account<br>
+            <input type="checkbox" name="account_flag" id="account_change_password" onclick="CheckboxGroup(this)" value="2" {% if user['deactivated'] == 2 %}checked{% endif %} disabled>Require password reset on next login<br>
+            <input type="checkbox" name="account_flag" id="account_verification_reqd" onclick="CheckboxGroup(this)" value="3" {% if user['deactivated'] == 3 %}checked{% endif %} disabled>Account verification required<br>
+        </fieldset>
         {% endif %}
+        &nbsp;<br>
         <input type="submit" class="btn-primary" value="Save">
         <input type="reset" class="btn-secondary" value="Cancel"><br>
     </form>
+    <script>
+        function CheckboxGroup(checkbox) {
+            group = document.getElementsByName(checkbox.name);
+            group.forEach((item) => {
+                if (item !== checkbox) {
+                    item.checked = false;
+                }
+            })
+        }
+    </script>
 {% endblock %}
