@@ -22,8 +22,9 @@ CREATE TABLE users (
 CREATE TABLE password_tokens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    token TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
     token_type TEXT NOT NULL,
+    expires TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 

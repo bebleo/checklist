@@ -8,15 +8,17 @@
 # ----------------------------------------------------------------------
 
 import functools
-import uuid
+# import uuid
 
 from flask import (Blueprint, abort, current_app, flash, g, logging, redirect,
                    render_template, request, session, url_for)
 from flask_mail import Mail
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from checklist_app.db import get_db
-from checklist_app.models.user import AccountStatus, get_user
+from .db import get_db
+from .models.password_token import (TokenExpiredError, TokenInvalidError,
+                                    TokenPurpose, save_token, validate_token)
+from .models.user import AccountStatus, get_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -47,25 +49,17 @@ def admin_required(view):
 def send_password_change():
     """Get the user email and send the link with the reset token."""
     sent = False
-    token = uuid.uuid4().hex
+    token = None
 
     if request.method == 'POST':
         email = request.form['username']
-
-        if email:
-            # Provided an email is sent attempt to get the user from the database.
-            user = get_user(username=email)
+        user = get_user(username=email)
 
         if user is None:
             # If no user exists with that email flash that message.
             flash("No user found with email.")
         else:
-            db = get_db()
-            db.execute(
-                'INSERT INTO password_tokens (user_id, token, token_type) VALUES (?, ?, ?)',
-                (user['id'], token, 'password_reset')
-            )
-            db.commit()
+            token = save_token(user['id'])
 
             mail = Mail(current_app)
             mail.send_message(subject='Reset Password Link',
@@ -85,54 +79,46 @@ def send_password_change():
 @bp.route('/forgotpassword/<string:token>', methods=('GET', 'POST'))
 def forgot_password(token = None):
     """Allow user to change the password based on providing a token"""
-    db=get_db()
 
-    t = db.execute(
-        'SELECT * FROM password_tokens WHERE token = ?;',
-        (token, )
-    ).fetchone()
+    try: 
+        validate_token(token)
 
-    if t is None:
+        if request.method == 'POST':
+            # save the password
+            username = request.form['username']
+            password = request.form['password']
+            confirm = request.form['confirm']
+
+            # get the user and validate that it is that.
+            user = get_user(username=username)
+            validate_token(token, user['id'])
+
+            if password == confirm:
+                db = get_db()
+                db.execute('UPDATE users SET password = ? WHERE id = ?', 
+                           (generate_password_hash(password), user['id']))
+                db.execute('DELETE FROM password_tokens WHERE token = ?', 
+                           (token, ))
+                db.commit()
+
+                mail = Mail(current_app)
+                mail.send_message(subject='Password reset',
+                    recipients=[user['email']],
+                    sender='Bebleo <noreply@bebleo.url>',
+                    body=render_template('emails/password_reset.txt', 
+                                         user=user))
+
+                current_app.logger.info(f"Password reset for user with id {user['id']}.")
+                return redirect(url_for('home.index'))
+            else:
+                flash('Password and confirmation must match.')
+
+        return render_template('auth/update_password.html', token=token)
+
+    except (TokenExpiredError, TokenInvalidError):
         flash('Token is incorrect or expired.')
-        current_app.logger.warn(f'Incorrect or expired token {token} used for password reset.')
+        current_app.logger.warning(f'Incorrect or expired token {token} used for password reset.')
         return redirect(url_for('auth.send_password_change'))
-
-    if request.method == 'POST':
-        # save the password
-        username = request.form['username']
-        password = request.form['password']
-        confirm = request.form['confirm']
-
-        # Check the token is valid and get the user_id from the db
-        user = get_user(username=username)
-        token_query = 'SELECT * FROM password_tokens WHERE token = ? AND user_id = ?'
-        t = db.execute(token_query, (token, user['id'])).fetchone()
-
-        if t is None:
-            flash('Token is incorrect or expired.')
-            current_app.logger.warn(f'Incorrect or expired token {token} used for password reset.')
-            return redirect(url_for('auth.send_password_change'))
-
-        if password == confirm:
-            password_hash = generate_password_hash(password)
-            user_id = t['user_id']
-            db.execute('UPDATE users SET password = ? WHERE id = ?', (password_hash, user_id))
-            db.execute('DELETE FROM password_tokens WHERE id = ?', (t['id'], ))
-            user = db.execute('SELECT * FROM users WHERE id = ?;',(user_id, )).fetchone()
-            db.commit()
-
-            mail = Mail(current_app)
-            mail.send_message(subject='Password reset',
-                recipients=[user['email']],
-                sender='Bebleo <noreply@bebleo.url>',
-                body=render_template('emails/password_reset.txt', user=user))
-
-            current_app.logger.info(f'Password reset for user with id {user_id}.')
-            return redirect(url_for('home.index'))
-        else:
-            flash('Password and confirmation must match.')
-
-    return render_template('auth/update_password.html', token=token)
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -143,23 +129,23 @@ def register():
 
     if request.method == 'POST':
         username = request.form['username'].strip()
-        given_name = request.form['given_name'].strip()
-        family_name = request.form['family_name'].strip()
+        given_name = request.form['given_name']
+        family_name = request.form['family_name']
         password = request.form['password'].strip()
         confirm = request.form['confirm'].strip()
         
         db = get_db()
         error = None
 
+        print(f"username being registered is {username} with {password}")
+
         if not username:
             error = 'Username cannot be empty.'
         elif not password:
             error = 'Password cannot be empty.'
-        elif not password == confirm:
+        elif password != confirm:
             error = 'Password and confirmation must match.'
-        elif db.execute(
-            'SELECT id FROM users WHERE email = ?', (username, )
-        ).fetchone() is not None:
+        elif get_user(username=username) is not None:
             error = 'Username is already used.'
 
         if error is None:

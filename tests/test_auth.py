@@ -1,6 +1,7 @@
 import pytest
 
 from checklist_app.db import get_db
+from checklist_app.models.user import get_user
 
 def test_get_send_password_change(client):
     response = client.get('/auth/forgotpassword')
@@ -26,10 +27,7 @@ def test_forgot_password(app, client):
         username = 'test@bebleo.url'
 
         client.post('/auth/forgotpassword', data={"username": username})
-        user = db.execute(
-            'SELECT * FROM users WHERE email = ?',
-            (username,)
-        ).fetchone()
+        user = get_user(username)
         row = db.execute(
             'SELECT * FROM password_tokens WHERE user_id = ?',
             (user['id'],)
