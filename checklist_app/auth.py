@@ -104,7 +104,7 @@ def forgot_password(token = None):
         confirm = request.form['confirm']
 
         # Check the token is valid and get the user_id from the db
-        user = db.execute('SELECT id FROM users WHERE email = ?', (username, )).fetchone()
+        user = get_user(username=username)
         token_query = 'SELECT * FROM password_tokens WHERE token = ? AND user_id = ?'
         t = db.execute(token_query, (token, user['id'])).fetchone()
 
@@ -116,23 +116,18 @@ def forgot_password(token = None):
         if password == confirm:
             password_hash = generate_password_hash(password)
             user_id = t['user_id']
-            db.execute(
-                'UPDATE users SET password = ? WHERE id = ?',
-                (password_hash, user_id))
-            db.execute(
-                'DELETE FROM password_tokens WHERE id = ?',
-                (t['id'], ))
-            user = db.execute(
-                'SELECT * FROM users WHERE id = ?;',
-                (user_id, )).fetchone()
+            db.execute('UPDATE users SET password = ? WHERE id = ?', (password_hash, user_id))
+            db.execute('DELETE FROM password_tokens WHERE id = ?', (t['id'], ))
+            user = db.execute('SELECT * FROM users WHERE id = ?;',(user_id, )).fetchone()
             db.commit()
 
             mail = Mail(current_app)
             mail.send_message(subject='Password reset',
-                               recipients=[user['email']],
-                               sender='Bebleo <noreply@bebleo.url>',
-                               body=render_template('emails/password_reset.txt', user=user))
-            current_app.logger.info('Password reset for user with id {}.'.format(user_id))
+                recipients=[user['email']],
+                sender='Bebleo <noreply@bebleo.url>',
+                body=render_template('emails/password_reset.txt', user=user))
+
+            current_app.logger.info(f'Password reset for user with id {user_id}.')
             return redirect(url_for('home.index'))
         else:
             flash('Password and confirmation must match.')

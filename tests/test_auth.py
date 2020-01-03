@@ -10,7 +10,7 @@ def test_get_send_password_change(client):
     "username, expected", 
     [
         ("false", b"No user found"), 
-        ("admin@admin.ad", b"Password Sent")
+        ("admin@bebleo.url", b"Password Sent")
     ]
 )
 def test_post_send_password_change(client, username, expected):
@@ -93,7 +93,7 @@ def test_forgot_password(app, client):
         ),
         (
             {
-                "username": "admin@admin.ad",
+                "username": "admin@bebleo.url",
                 "given_name": "User1",
                 "family_name": "Bebleo",
                 "password": "password",
@@ -119,8 +119,8 @@ def test_get_login(client):
 @pytest.mark.parametrize(
     "username, password, expected",
     [
-        ("admin@admin.ad", "admin", 302),
-        ("admin@admin.ad", "false-password", 200)
+        ("admin@bebleo.url", "admin", 302),
+        ("admin@bebleo.url", "false-password", 200)
     ]
 )
 def test_post_login(client, username, password, expected):
