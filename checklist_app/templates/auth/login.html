@@ -2,8 +2,15 @@
 
 {% block content %}
     <div class="page-form">
+        {% if form.errors %}
+        <div class="messages">
+            {% for e in form.errors.values() %}
+            {{ '<br>'.join(e)|safe }}
+            {% endfor %}
+        </div>
+        {% endif %}
         <form action="{{ url_for('auth.login') }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            {{ form.csrf_token }}
             <h2>Login</h2>
             <label for="username">Email: </label>
             <input type="email" name="username" id="username" placeholder="email" required><br>

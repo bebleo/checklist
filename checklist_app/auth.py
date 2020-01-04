@@ -16,6 +16,7 @@ from flask_mail import Mail
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import get_db
+from .forms.login_form import LoginForm
 from .models.password_token import (TokenExpiredError, TokenInvalidError,
                                     TokenPurpose, save_token, validate_token)
 from .models.user import AccountStatus, get_user
@@ -167,31 +168,17 @@ def register():
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     """Login."""
-    session.pop('_flashes', None)
+    form = LoginForm(request.form)
 
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        error = None
-        user = get_user(username)
-
-        if not username:
-            error = 'Username cannot be empty.'
-        elif not password:
-            error = 'Password cannot be blank.'
-        elif (user is None) or (not check_password_hash(user['password'], password)):
-            error = 'Login incorrect, please try again.'
-        
-        if user['deactivated']:
+    if form.validate_on_submit(): 
+        if form._user['deactivated']:
             return redirect(url_for('auth.deactivated'))
-        elif not error:
-            session.clear()
-            session['user_id'] = user['id']
-            return redirect(url_for('home.index'))
-        else:
-            flash(error)
+            
+        session.clear()
+        session['user_id'] = form._user['id']
+        return redirect(url_for('home.index'))
 
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', form=form)
 
 @bp.route('/logout')
 def logout():
