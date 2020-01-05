@@ -1,9 +1,13 @@
 {% extends 'base_page.html' %}
+{% from 'macros.html' import error_messages %}
 
 {% block content %}
 <div class="page-form">
+    {% if form.errors %}
+        {{ error_messages(form.errors) }}
+    {% endif %}
     <form action="{{ url_for('auth.register') }}" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {{ form.csrf_token }}
         <h2>Register</h2>
         <label for="username">Email: </label>
         <input type="email" name="username" id="username" placeholder="email" required><br>
