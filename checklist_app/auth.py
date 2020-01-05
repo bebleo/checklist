@@ -19,6 +19,7 @@ from .db import get_db
 from .forms.login_form import LoginForm
 from .forms.registration_form import RegistrationForm
 from .forms.send_password_change_form import SendPasswordChangeForm
+from .forms.update_password_form import UpdatePasswordForm
 from .models.password_token import (TokenExpiredError, TokenInvalidError,
                                     TokenPurpose, save_token, validate_token)
 from .models.user import AccountStatus, get_user
@@ -85,38 +86,35 @@ def forgot_password(token = None):
 
     try: 
         validate_token(token)
+        form = UpdatePasswordForm()
 
-        if request.method == 'POST':
+        if form.validate_on_submit():
             # save the password
-            username = request.form['username']
-            password = request.form['password']
-            confirm = request.form['confirm']
+            username = form.username.data
+            password = form.password.data
 
             # get the user and validate that it is that.
             user = get_user(username=username)
             validate_token(token, user['id'])
 
-            if password == confirm:
-                db = get_db()
-                db.execute('UPDATE users SET password = ? WHERE id = ?', 
-                           (generate_password_hash(password), user['id']))
-                db.execute('DELETE FROM password_tokens WHERE token = ?', 
-                           (token, ))
-                db.commit()
+            db = get_db()
+            db.execute('UPDATE users SET password = ? WHERE id = ?', 
+                        (generate_password_hash(password), user['id']))
+            db.execute('DELETE FROM password_tokens WHERE token = ?', 
+                        (token, ))
+            db.commit()
 
-                mail = Mail(current_app)
-                mail.send_message(subject='Password reset',
-                    recipients=[user['email']],
-                    sender='Bebleo <noreply@bebleo.url>',
-                    body=render_template('emails/password_reset.txt', 
-                                         user=user))
+            mail = Mail(current_app)
+            mail.send_message(subject='Password reset',
+                recipients=[user['email']],
+                sender='Bebleo <noreply@bebleo.url>',
+                body=render_template('emails/password_reset.txt', 
+                                        user=user))
 
-                current_app.logger.info(f"Password reset for user with id {user['id']}.")
-                return redirect(url_for('home.index'))
-            else:
-                flash('Password and confirmation must match.')
+            current_app.logger.info(f"Password reset for user with id {user['id']}.")
+            return redirect(url_for('home.index'))
 
-        return render_template('auth/update_password.html', token=token)
+        return render_template('auth/update_password.html', token=token, form=form)
 
     except (TokenExpiredError, TokenInvalidError):
         flash('Token is incorrect or expired.')
