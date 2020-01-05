@@ -9,3 +9,7 @@ class CreateListForm(FlaskForm):
         validators=[InputRequired("Title for the list required.")]
     )
     list_description = TextAreaField("list_description")
+
+
+class EditListForm(CreateListForm):
+    pass

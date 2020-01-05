@@ -5,7 +5,7 @@ from flask_wtf.csrf import generate_csrf
 from checklist_app.auth import login_required
 from checklist_app.db import get_db
 
-from checklist_app.forms.checklist_forms import CreateListForm
+from checklist_app.forms.checklist_forms import CreateListForm, EditListForm
 
 bp = Blueprint('checklist', __name__, url_prefix='/checklist')
 
@@ -75,18 +75,17 @@ def create():
 @login_required
 def edit(id):
     """Edit the checklist header with primary key matchig the id."""
+    form = EditListForm()
+
     db = get_db()
     checklist = get_checklist(id)
 
     if checklist is None:
         abort(401)
 
-    if request.method == 'POST':
-        title = request.form['list_title']
-        desc = request.form['list_description']
-
-        current_app.logger.debug(f'{title}')
-        current_app.logger.debug(f'{desc}')
+    if form.validate_on_submit():
+        title = form.list_title.data
+        desc = form.list_description.data
 
         if title != checklist.header["title"]:
             current_app.logger.debug(f"{title} not {checklist.header['title']}")
@@ -108,7 +107,7 @@ def edit(id):
         db.commit()
         return redirect(url_for('checklist.view', id=id))
             
-    return render_template('checklist/create.html', header=checklist.header)
+    return render_template('checklist/create.html', form=form)
 
 @bp.route('/delete/<int:id>', methods=('GET', 'POST'))
 @login_required
