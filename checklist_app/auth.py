@@ -157,14 +157,12 @@ def login():
     """Login."""
     form = LoginForm(request.form)
 
-    if form.validate_on_submit():
-        user = get_user(form.username.data)
-
-        if user['deactivated']:
+    if form.validate_on_submit(): 
+        if form._user['deactivated']:
             return redirect(url_for('auth.deactivated'))
             
         session.clear()
-        session['user_id'] = user['id']
+        session['user_id'] = form._user['id']
         return redirect(url_for('home.index'))
 
     return render_template('auth/login.html', form=form)
