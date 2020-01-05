@@ -106,7 +106,9 @@ def edit(id):
         
         db.commit()
         return redirect(url_for('checklist.view', id=id))
-            
+
+    form.list_title.data = checklist.header['title']
+    form.list_description.data = checklist.header['description']
     return render_template('checklist/create.html', form=form)
 
 @bp.route('/delete/<int:id>', methods=('GET', 'POST'))
