@@ -18,6 +18,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from .db import get_db
 from .forms.login_form import LoginForm
 from .forms.registration_form import RegistrationForm
+from .forms.send_password_change_form import SendPasswordChangeForm
 from .models.password_token import (TokenExpiredError, TokenInvalidError,
                                     TokenPurpose, save_token, validate_token)
 from .models.user import AccountStatus, get_user
@@ -50,11 +51,13 @@ def admin_required(view):
 @bp.route('/forgotpassword', methods=('GET', 'POST'))
 def send_password_change():
     """Get the user email and send the link with the reset token."""
+    form = SendPasswordChangeForm()
     sent = False
     token = None
 
-    if request.method == 'POST':
-        email = request.form['username']
+    if form.validate_on_submit():
+        email = form.username.data
+        current_app.logger.debug(f"{email} sent for password reset.")
         user = get_user(username=email)
 
         if user is None:
@@ -73,10 +76,8 @@ def send_password_change():
                                                    token=token))
             sent = True
 
-    return render_template('auth/send_password_change.html', 
-                           email_sent=sent, 
-                           debug=current_app.debug, 
-                           token=token)
+    return render_template('auth/send_password_change.html', email_sent=sent, 
+                           debug=current_app.debug, token=token, form=form)
 
 @bp.route('/forgotpassword/<string:token>', methods=('GET', 'POST'))
 def forgot_password(token = None):

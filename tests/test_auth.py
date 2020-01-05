@@ -10,15 +10,12 @@ def test_get_send_password_change(client):
 @pytest.mark.parametrize(
     "username, expected", 
     [
-        ("false", b"No user found"), 
+        ("false@bebleo.url", b"No user found"), 
         ("admin@bebleo.url", b"Password Sent")
     ]
 )
 def test_post_send_password_change(client, username, expected):
-    response = client.post(
-        '/auth/forgotpassword', 
-        data = {"username": username}
-    )
+    response = client.post('/auth/forgotpassword', data = {"username": username})
     assert expected in response.data
 
 def test_forgot_password(app, client):
