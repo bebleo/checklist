@@ -5,12 +5,13 @@
 # December 13, 2019
 # -----------------------------------------------------
 
-from flask import (abort, Blueprint, current_app, flash, g, redirect, render_template,
-                   request, url_for)
+from flask import (Blueprint, abort, current_app, flash, g, redirect,
+                   render_template, request, url_for)
 from werkzeug.security import generate_password_hash
 
 from checklist_app.auth import admin_required, login_required
 from checklist_app.db import get_db
+from checklist_app.forms.admin_forms import AddUserForm
 from checklist_app.models.user import get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -136,30 +137,21 @@ def validate_password(password_field='password', confirmation_field='confirm'):
 @admin_required
 def add_user():
     """Add a user to the solution."""
-    user = None
     saved = False
+    form = AddUserForm()
     
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        given_name = request.form['given_name'].strip()
-        family_name = request.form['family_name'].strip()
-        password = request.form['password'].strip()
-        confirm = request.form['confirm'].strip()
-        is_admin = checked('is_admin')
+    if form.validate_on_submit():
+        username = form.username.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        password = form.password.data
+        is_admin = form.is_admin.data
 
-        error = None
         user_check = get_user(username=username)
-
-        password_confirm = validate_password()
-        current_app.logger.debug(f'passwords match: {password_confirm}')
 
         if user_check:
             # Username already in use.
             error = f"Username already exists. <a href=\"{url_for('admin.edit_user', id=user_check['id'])}\">Edit</a>"
-        elif password != confirm:
-            error = "Password and confirmation must match"
-
-        if error:
             flash(error)
         else:
             db = get_db()
@@ -168,7 +160,6 @@ def add_user():
                 (username, given_name, family_name, generate_password_hash(password), is_admin, )
             )
             db.commit()
-        
             saved = True
   
-    return render_template('admin/add_user.html', user=user, success=saved)
+    return render_template('admin/add_user.html', form=form, success=saved)
