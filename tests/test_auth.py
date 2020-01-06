@@ -1,6 +1,7 @@
 import pytest
 
 from checklist_app.db import get_db
+from checklist_app.models.user import get_user
 
 def test_get_send_password_change(client):
     response = client.get('/auth/forgotpassword')
@@ -9,15 +10,12 @@ def test_get_send_password_change(client):
 @pytest.mark.parametrize(
     "username, expected", 
     [
-        ("false", b"No user found"), 
-        ("admin@admin.ad", b"Password Sent")
+        ("false@bebleo.url", b"No user found"), 
+        ("admin@bebleo.url", b"Password Sent")
     ]
 )
 def test_post_send_password_change(client, username, expected):
-    response = client.post(
-        '/auth/forgotpassword', 
-        data = {"username": username}
-    )
+    response = client.post('/auth/forgotpassword', data = {"username": username})
     assert expected in response.data
 
 def test_forgot_password(app, client):
@@ -26,10 +24,7 @@ def test_forgot_password(app, client):
         username = 'test@bebleo.url'
 
         client.post('/auth/forgotpassword', data={"username": username})
-        user = db.execute(
-            'SELECT * FROM users WHERE email = ?',
-            (username,)
-        ).fetchone()
+        user = get_user(username)
         row = db.execute(
             'SELECT * FROM password_tokens WHERE user_id = ?',
             (user['id'],)
@@ -93,7 +88,7 @@ def test_forgot_password(app, client):
         ),
         (
             {
-                "username": "admin@admin.ad",
+                "username": "admin@bebleo.url",
                 "given_name": "User1",
                 "family_name": "Bebleo",
                 "password": "password",
@@ -119,13 +114,19 @@ def test_get_login(client):
 @pytest.mark.parametrize(
     "username, password, expected",
     [
-        ("admin@admin.ad", "admin", 302),
-        ("admin@admin.ad", "false-password", 200)
+        ("admin@bebleo.url", "admin", 302),
+        ("admin@bebleo.url", "false-password", 200)
     ]
 )
 def test_post_login(client, username, password, expected):
     response = client.post('/auth/login', data={"username": username, "password": password})
     assert response.status_code == expected
+
+def test_post_login_diabled_user(client):
+    """If a disabled user attempts to login direct them to the account disabled page."""
+    response = client.post('/auth/login', data={"username": "disabled@bebleo.url", "password": "test"})
+    assert response.status_code == 302
+    assert '/auth/disabled' in response.headers['Location']
 
 def test_logout(client):
     response = client.get('/auth/logout')

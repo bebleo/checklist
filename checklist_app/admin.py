@@ -5,12 +5,16 @@
 # December 13, 2019
 # -----------------------------------------------------
 
-from flask import (abort, Blueprint, current_app, flash, g, redirect, render_template,
-                   request, url_for)
+import json
+
+from flask import (Blueprint, abort, current_app, flash, g, jsonify, redirect,
+                   render_template, request, url_for)
 from werkzeug.security import generate_password_hash
 
 from checklist_app.auth import admin_required, login_required
 from checklist_app.db import get_db
+from checklist_app.forms.admin_forms import AddUserForm, EditUserForm
+from checklist_app.models.user import get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -72,12 +76,15 @@ def list_users():
 @login_required
 def edit_user(id: int):
     """Edit the user with the id."""
-    user = user_by_username(id=id)
+    form = EditUserForm()
+    user = get_user(id=id)
     saved = False
 
     if not user:
         # ID doesn't exist in the database so return 404-Page Not Found.
         abort(404)
+
+    deactivated = user['deactivated'] if user['deactivated'] else 0
 
     # If the user isn't an admin check that the user id matches the logged in user.
     # If not then abort the request with a 401-Unauthorized error
@@ -86,14 +93,19 @@ def edit_user(id: int):
         if user['id'] != g.user['id']:
             abort(401)
 
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        given_name = request.form['given_name'].strip()
-        family_name = request.form['family_name'].strip()
-        is_admin = checked('is_admin')
+    if form.validate_on_submit():
+        username = form.username.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        is_admin = form.is_admin.data
+        account_flag = request.form.get('account_flag') if checked('account_flag') else 0
 
         db = get_db()
         error = None
+        if account_flag:
+            deactivated = max(account_flag)
+        else:
+            deactivated = 0
 
         if not username:
             error = 'Username must not be blank.'
@@ -101,7 +113,9 @@ def edit_user(id: int):
             # Make it impossible to remove oneself as an admin.
             # This ensures that there is always at least on admin.
             if user['is_admin'] and not is_admin:
-                error = 'Cannot remove admin rights from own account.' 
+                error = 'Cannot remove admin rights from your own account.'
+            elif account_flag:
+                error = "Cannot deactivate your own account."
 
         if error:
             flash(error)
@@ -111,43 +125,41 @@ def edit_user(id: int):
                       email = ?,
                       given_name = ?, 
                       family_name = ?, 
-                      is_admin = ? 
+                      is_admin = ?, 
+                      deactivated = ?
                    WHERE 
                       id = ?
                 """, 
-                (username, given_name, family_name, is_admin, id)
+                (username, given_name, family_name, is_admin, deactivated, id)
             )
             user = user_by_username(id=id)
             db.commit()
             saved = True
 
-    return render_template('admin/edit_user.html', user=user, success=saved)
+    return render_template('admin/edit_user.html', form=form, deactivated=deactivated, user=user, success=saved)
+
+def validate_password(password_field='password', confirmation_field='confirm'):
+    return request.form[password_field] == request.form[confirmation_field]
 
 @bp.route('/users/new', methods=('GET', 'POST'))
 @admin_required
 def add_user():
     """Add a user to the solution."""
-    user = None
     saved = False
+    form = AddUserForm()
     
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        given_name = request.form['given_name'].strip()
-        family_name = request.form['family_name'].strip()
-        password = request.form['password'].strip()
-        confirm = request.form['confirm'].strip()
-        is_admin = checked('is_admin')
+    if form.validate_on_submit():
+        username = form.username.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        password = form.password.data
+        is_admin = form.is_admin.data
 
-        error = None
-        user_check = user_by_username(username=username)
+        user_check = get_user(username=username)
 
         if user_check:
             # Username already in use.
             error = f"Username already exists. <a href=\"{url_for('admin.edit_user', id=user_check['id'])}\">Edit</a>"
-        elif password != confirm:
-            error = "Password and confirmation must match"
-
-        if error:
             flash(error)
         else:
             db = get_db()
@@ -156,7 +168,6 @@ def add_user():
                 (username, given_name, family_name, generate_password_hash(password), is_admin, )
             )
             db.commit()
-        
             saved = True
   
-    return render_template('admin/add_user.html', user=user, success=saved)
+    return render_template('admin/add_user.html', form=form, success=saved)

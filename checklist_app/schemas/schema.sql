@@ -14,6 +14,7 @@ CREATE TABLE users (
     given_name TEXT,
     family_name TEXT,
     is_admin BOOLEAN DEFAULT FALSE,
+    deactivated INTEGER NOT NULL DEFAULT 0,
     password TEXT NOT NULL,
     row_version TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -21,8 +22,9 @@ CREATE TABLE users (
 CREATE TABLE password_tokens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    token TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
     token_type TEXT NOT NULL,
+    expires TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
@@ -62,3 +64,18 @@ CREATE TABLE config (
     config_key TEXT UNIQUE NOT NULL,
     config_value TEXT NOT NULL
 );
+
+INSERT INTO users (
+    email, 
+    given_name, 
+    family_name, 
+    is_admin, 
+    deactivated, 
+    password)
+VALUES (
+    'admin@bebleo.url', 
+    'Administrator', 
+    'Built-In', 
+    1, 
+    0, 
+    'pbkdf2:sha256:150000$0iM7kfzV$8a112f27b8b261f65e93b236fda47ceed69ee3f0696a5d435be516568d4a946d');

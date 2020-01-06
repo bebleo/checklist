@@ -35,31 +35,9 @@ def close_db(e=None):
 def init_db():
     """Initializes the database."""
     db = get_db()
-    current_app.logger.debug('Initializing database.')
 
     with current_app.open_resource('schemas/schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
-        current_app.logger.debug('Initialized tables.')
-
-    db.execute("""INSERT INTO 
-                    users (email, 
-                           password, 
-                           given_name, 
-                           family_name, 
-                           is_admin) 
-                  VALUES (?, ?, ?, ?, ?);""",
-                  ('admin@admin.ad', 
-                   generate_password_hash('admin'), 
-                   'Admin', 
-                   'Administrator', 
-                   True))
-    db.commit()
-    user = db.execute(
-        'SELECT * FROM users WHERE email = ?',
-        ('admin@admin.ad', )
-    ).fetchone()
-    current_app.logger.debug('Added admin@admin.ad user with id {}.'.format(user['id']))
-
 
 @click.command('init-db')
 @with_appcontext

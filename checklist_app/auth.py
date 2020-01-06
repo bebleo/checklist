@@ -8,40 +8,64 @@
 # ----------------------------------------------------------------------
 
 import functools
-import uuid
+# import uuid
 
 from flask import (Blueprint, abort, current_app, flash, g, logging, redirect,
                    render_template, request, session, url_for)
 from flask_mail import Mail
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from checklist_app.db import get_db
+from .db import get_db
+from .forms.login_form import LoginForm
+from .forms.registration_form import RegistrationForm
+from .forms.send_password_change_form import SendPasswordChangeForm
+from .forms.update_password_form import UpdatePasswordForm
+from .models.password_token import (TokenExpiredError, TokenInvalidError,
+                                    TokenPurpose, save_token, validate_token)
+from .models.user import AccountStatus, get_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+def login_required(view):
+    @functools.wraps(view)
+    def check_login(**kwargs):
+        if g.user is None:
+            return redirect(url_for('auth.login'))
+        elif g.user['deactivated']:
+            return redirect(url_for('auth.deactivated'))
+
+        return view(**kwargs)
+
+    return check_login
+
+def admin_required(view):
+    @functools.wraps(view)
+    @login_required
+    def check_admin(**kwargs):
+        if not g.user['is_admin']:
+            abort(401)
+        
+        return view(**kwargs)
+
+    return check_admin
 
 @bp.route('/forgotpassword', methods=('GET', 'POST'))
 def send_password_change():
     """Get the user email and send the link with the reset token."""
+    form = SendPasswordChangeForm()
     sent = False
-    token = uuid.uuid4().hex
+    token = None
 
-    if request.method == 'POST':
-        email = request.form['username']
-        db = get_db()
+    if form.validate_on_submit():
+        email = form.username.data
+        current_app.logger.debug(f"{email} sent for password reset.")
+        user = get_user(username=email)
 
-        user = db.execute(
-            'SELECT * FROM users WHERE email = ?',
-            (email, )
-        ).fetchone()
-
-        if not user:
+        if user is None:
+            # If no user exists with that email flash that message.
             flash("No user found with email.")
         else:
-            db.execute(
-                'INSERT INTO password_tokens (user_id, token, token_type) VALUES (?, ?, ?)',
-                (user['id'], token, 'password_reset')
-            )
-            db.commit()
+            token = save_token(user['id'])
 
             mail = Mail(current_app)
             mail.send_message(subject='Reset Password Link',
@@ -53,67 +77,49 @@ def send_password_change():
                                                    token=token))
             sent = True
 
-    return render_template('auth/send_password_change.html', 
-                           email_sent=sent, 
-                           debug=current_app.debug, 
-                           token=token)
+    return render_template('auth/send_password_change.html', email_sent=sent, 
+                           debug=current_app.debug, token=token, form=form)
 
 @bp.route('/forgotpassword/<string:token>', methods=('GET', 'POST'))
 def forgot_password(token = None):
     """Allow user to change the password based on providing a token"""
-    db=get_db()
 
-    t = db.execute(
-        'SELECT * FROM password_tokens WHERE token = ?;',
-        (token, )
-    ).fetchone()
+    try: 
+        validate_token(token)
+        form = UpdatePasswordForm()
 
-    if t is None:
-        flash('Token is incorrect or expired.')
-        current_app.logger.warn(f'Incorrect or expired token {token} used for password reset.')
-        return redirect(url_for('auth.send_password_change'))
+        if form.validate_on_submit():
+            # save the password
+            username = form.username.data
+            password = form.password.data
 
-    if request.method == 'POST':
-        # save the password
-        username = request.form['username']
-        password = request.form['password']
-        confirm = request.form['confirm']
+            # get the user and validate that it is that.
+            user = get_user(username=username)
+            validate_token(token, user['id'])
 
-        # Check the token is valid and get the user_id from the db
-        user = db.execute('SELECT id FROM users WHERE email = ?', (username, )).fetchone()
-        token_query = 'SELECT * FROM password_tokens WHERE token = ? AND user_id = ?'
-        t = db.execute(token_query, (token, user['id'])).fetchone()
-
-        if t is None:
-            flash('Token is incorrect or expired.')
-            current_app.logger.warn(f'Incorrect or expired token {token} used for password reset.')
-            return redirect(url_for('auth.send_password_change'))
-
-        if password == confirm:
-            password_hash = generate_password_hash(password)
-            user_id = t['user_id']
-            db.execute(
-                'UPDATE users SET password = ? WHERE id = ?',
-                (password_hash, user_id))
-            db.execute(
-                'DELETE FROM password_tokens WHERE id = ?',
-                (t['id'], ))
-            user = db.execute(
-                'SELECT * FROM users WHERE id = ?;',
-                (user_id, )).fetchone()
+            db = get_db()
+            db.execute('UPDATE users SET password = ? WHERE id = ?', 
+                        (generate_password_hash(password), user['id']))
+            db.execute('DELETE FROM password_tokens WHERE token = ?', 
+                        (token, ))
             db.commit()
 
             mail = Mail(current_app)
             mail.send_message(subject='Password reset',
-                               recipients=[user['email']],
-                               sender='Bebleo <noreply@bebleo.url>',
-                               body=render_template('emails/password_reset.txt', user=user))
-            current_app.logger.info('Password reset for user with id {}.'.format(user_id))
-            return redirect(url_for('home.index'))
-        else:
-            flash('Password and confirmation must match.')
+                recipients=[user['email']],
+                sender='Bebleo <noreply@bebleo.url>',
+                body=render_template('emails/password_reset.txt', 
+                                        user=user))
 
-    return render_template('auth/update_password.html', token=token)
+            current_app.logger.info(f"Password reset for user with id {user['id']}.")
+            return redirect(url_for('home.index'))
+
+        return render_template('auth/update_password.html', token=token, form=form)
+
+    except (TokenExpiredError, TokenInvalidError):
+        flash('Token is incorrect or expired.')
+        current_app.logger.warning(f'Incorrect or expired token {token} used for password reset.')
+        return redirect(url_for('auth.send_password_change'))
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
@@ -122,73 +128,43 @@ def register():
         # There's a logged in user so no legitmate reason to register.
         abort(401)
 
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        given_name = request.form['given_name'].strip()
-        family_name = request.form['family_name'].strip()
-        password = request.form['password'].strip()
-        confirm = request.form['confirm'].strip()
-        
+    form = RegistrationForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        password = form.password.data
+
         db = get_db()
-        error = None
 
-        if not username:
-            error = 'Username cannot be empty.'
-        elif not password:
-            error = 'Password cannot be empty.'
-        elif not password == confirm:
-            error = 'Password and confirmation must match.'
-        elif db.execute(
-            'SELECT id FROM users WHERE email = ?', (username, )
-        ).fetchone() is not None:
-            error = 'Username is already used.'
-
-        if error is None:
-            # Insert the user into database
-            cur = db.cursor()
-            cur.execute(
+        if get_user(username=username) is not None:
+            form.username.errors.append('Username is already used.')
+        else:
+            db.execute(
                 'INSERT INTO users (email, given_name, family_name, password) VALUES (?, ?, ?, ?);', 
                 (username, given_name, family_name, generate_password_hash(password), ))
-            user_id = cur.lastrowid
             db.commit()
 
-            current_app.logger.info(f'Registered user with id {user_id}')
+            current_app.logger.info(f'Registered user with username {username}')
             return redirect(url_for('home.index'))
-        else:
-            flash(error)
 
-    return render_template('auth/register.html')
+    return render_template('auth/register.html', form=form)
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     """Login."""
-    session.pop('_flashes', None)
+    form = LoginForm(request.form)
 
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        db = get_db()
-        error = None
-        user = db.execute(
-            'SELECT * FROM users WHERE email = ?', 
-            (username.strip(), )
-        ).fetchone()
+    if form.validate_on_submit(): 
+        if form._user['deactivated']:
+            return redirect(url_for('auth.deactivated'))
+            
+        session.clear()
+        session['user_id'] = form._user['id']
+        return redirect(url_for('home.index'))
 
-        if not username:
-            error = 'Username cannot be empty.'
-        elif not password:
-            error = 'Password cannot be blank.'
-        elif (user is None) or (not check_password_hash(user['password'], password)):
-            error = 'Login incorrect, please try again.'
-        
-        if not error:
-            session.clear()
-            session['user_id'] = user['id']
-            return redirect(url_for('home.index'))
-        else:
-            flash(error)
-
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', form=form)
 
 @bp.route('/logout')
 def logout():
@@ -199,34 +175,13 @@ def logout():
 @bp.before_app_request
 def fetch_logged_in_user():
     user_id = session.get('user_id')
+    g.user = get_user(id=user_id) if user_id else None
 
-    if user_id is None:
-        g.user = None
-    else:
-        db = get_db()
-        g.user = db.execute(
-            'SELECT * FROM users WHERE id = ?',
-            (user_id, )
-        ).fetchone()
+@bp.route('/disabled', methods=('GET', 'POST'))
+def deactivated():
+    """Returns the account disabled page."""
+    if g.user:
+        if not g.user['deactivated']:
+            return redirect(url_for('home.index'))
 
-def login_required(view):
-    @functools.wraps(view)
-    def check_login(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-
-        return view(**kwargs)
-
-    return check_login
-
-def admin_required(view):
-    @functools.wraps(view)
-    def check_admin(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-        elif not g.user['is_admin']:
-            abort(401)
-        
-        return view(**kwargs)
-
-    return check_admin
+    return render_template('auth/account_disabled.html')

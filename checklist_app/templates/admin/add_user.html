@@ -1,5 +1,6 @@
 {% extends 'base_form.html' %}
 {% from 'macros.html' import success_message %}
+{% from 'macros.html' import error_messages %}
 
 {% block title %}
     {% if user %}
@@ -26,18 +27,21 @@
 {% endblock sidebar %}
 
 {% block content %}
+    {% if form.errors %}
+    {{ error_messages(form.errors) }}
+    {% endif %}
     <form action="" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {{ form.csrf_token }}
         <h2>Add User</h2>
         <div class="width-50">
             <label for="username">Username: </label>
-            <input type="email" name="username" id="username" class="width-50" value="{{ user['email'] }}">
+            <input type="email" name="username" id="username" class="width-50" value="{{ form.username.data }}">
         </div>
         &nbsp;<br>
         <label for="given_name">Given name: </label>
-        <input type="text" name="given_name" id="given_name" value="{{ user['given_name'] }}"><br>
+        <input type="text" name="given_name" id="given_name" value="{{ form.given_name.data }}"><br>
         <label for="family_name">Family name: </label>
-        <input type="text" name="family_name" id="family_name" value="{{ user['family_name'] }}"><br>
+        <input type="text" name="family_name" id="family_name" value="{{ form.family_name.data }}"><br>
         &nbsp;<br>
         <div class="width-50">
             <label for="password">password: </label>
@@ -48,7 +52,7 @@
             <input type="password" name="confirm" id="confirm" required>
         </div>
         &nbsp;<br>
-        <input type="checkbox" name="is_admin" id="is_admin" {% if user['is_admin'] %}checked{% endif %}>
+        <input type="checkbox" name="is_admin" id="is_admin" {% if form.is_admin.data %}checked{% endif %}>
         <label for="is_admin">is administrator</label><br>
         &nbsp;<br>
         <input type="submit" value="Save" class="btn-primary">
