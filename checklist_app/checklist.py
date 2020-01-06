@@ -5,6 +5,8 @@ from flask_wtf.csrf import generate_csrf
 from checklist_app.auth import login_required
 from checklist_app.db import get_db
 
+from checklist_app.forms.checklist_forms import CreateListForm, EditListForm
+
 bp = Blueprint('checklist', __name__, url_prefix='/checklist')
 
 class Checklist:
@@ -47,52 +49,43 @@ def get_checklist(id):
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
-def create(id=None):
-    if request.method == 'POST':
+def create():
+    form = CreateListForm()
+
+    if form.validate_on_submit():
         db = get_db()
-        title = request.form['list_title']
-        desc = request.form['list_description']
-        error = None
+        cur = db.cursor()
+        cur.execute(
+            'INSERT INTO checklists (title, [description], created_by, assigned_to) VALUES (?, ?, ?, ?)',
+            (form.list_title.data, form.list_description.data, g.user['id'], g.user['id'])
+        )
+        list_id = cur.lastrowid
+        change_history = "{} created the list called, \"{}\".".format(g.user['given_name'], form.list_title.data)
+        cur.execute(
+            'INSERT INTO checklist_history (change_description, checklist_id, user_id) VALUES (?, ?, ?);',
+            (change_history, list_id, g.user['id'])
+        )
+        db.commit()
 
-        if not title:
-            error = "Title for the list is required."
+        return redirect(url_for('checklist.view', id=list_id))
 
-        if error:
-            flash(error)
-        else:
-            cur = db.cursor()
-            cur.execute(
-                'INSERT INTO checklists (title, [description], created_by, assigned_to) VALUES (?, ?, ?, ?)',
-                (title, desc, g.user['id'], g.user['id'])
-            )
-            list_id = cur.lastrowid
-            change_history = "{} created the list called, \"{}\".".format(g.user['given_name'], title)
-            cur.execute(
-                'INSERT INTO checklist_history (change_description, checklist_id, user_id) VALUES (?, ?, ?);',
-                (change_history, list_id, g.user['id'])
-            )
-            db.commit()
-
-            return redirect(url_for('checklist.view', id=list_id))
-
-    return render_template('checklist/create.html', header=None)
+    return render_template('checklist/create.html', header=None, form=form)
 
 @bp.route('/edit/<int:id>', methods=('GET', 'POST'))
 @login_required
 def edit(id):
     """Edit the checklist header with primary key matchig the id."""
+    form = EditListForm()
+
     db = get_db()
     checklist = get_checklist(id)
 
     if checklist is None:
         abort(401)
 
-    if request.method == 'POST':
-        title = request.form['list_title']
-        desc = request.form['list_description']
-
-        current_app.logger.debug(f'{title}')
-        current_app.logger.debug(f'{desc}')
+    if form.validate_on_submit():
+        title = form.list_title.data
+        desc = form.list_description.data
 
         if title != checklist.header["title"]:
             current_app.logger.debug(f"{title} not {checklist.header['title']}")
@@ -113,8 +106,10 @@ def edit(id):
         
         db.commit()
         return redirect(url_for('checklist.view', id=id))
-            
-    return render_template('checklist/create.html', header=checklist.header)
+
+    form.list_title.data = checklist.header['title']
+    form.list_description.data = checklist.header['description']
+    return render_template('checklist/create.html', form=form)
 
 @bp.route('/delete/<int:id>', methods=('GET', 'POST'))
 @login_required

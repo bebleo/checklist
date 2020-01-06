@@ -16,6 +16,10 @@ from flask_mail import Mail
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import get_db
+from .forms.login_form import LoginForm
+from .forms.registration_form import RegistrationForm
+from .forms.send_password_change_form import SendPasswordChangeForm
+from .forms.update_password_form import UpdatePasswordForm
 from .models.password_token import (TokenExpiredError, TokenInvalidError,
                                     TokenPurpose, save_token, validate_token)
 from .models.user import AccountStatus, get_user
@@ -48,11 +52,13 @@ def admin_required(view):
 @bp.route('/forgotpassword', methods=('GET', 'POST'))
 def send_password_change():
     """Get the user email and send the link with the reset token."""
+    form = SendPasswordChangeForm()
     sent = False
     token = None
 
-    if request.method == 'POST':
-        email = request.form['username']
+    if form.validate_on_submit():
+        email = form.username.data
+        current_app.logger.debug(f"{email} sent for password reset.")
         user = get_user(username=email)
 
         if user is None:
@@ -71,10 +77,8 @@ def send_password_change():
                                                    token=token))
             sent = True
 
-    return render_template('auth/send_password_change.html', 
-                           email_sent=sent, 
-                           debug=current_app.debug, 
-                           token=token)
+    return render_template('auth/send_password_change.html', email_sent=sent, 
+                           debug=current_app.debug, token=token, form=form)
 
 @bp.route('/forgotpassword/<string:token>', methods=('GET', 'POST'))
 def forgot_password(token = None):
@@ -82,38 +86,35 @@ def forgot_password(token = None):
 
     try: 
         validate_token(token)
+        form = UpdatePasswordForm()
 
-        if request.method == 'POST':
+        if form.validate_on_submit():
             # save the password
-            username = request.form['username']
-            password = request.form['password']
-            confirm = request.form['confirm']
+            username = form.username.data
+            password = form.password.data
 
             # get the user and validate that it is that.
             user = get_user(username=username)
             validate_token(token, user['id'])
 
-            if password == confirm:
-                db = get_db()
-                db.execute('UPDATE users SET password = ? WHERE id = ?', 
-                           (generate_password_hash(password), user['id']))
-                db.execute('DELETE FROM password_tokens WHERE token = ?', 
-                           (token, ))
-                db.commit()
+            db = get_db()
+            db.execute('UPDATE users SET password = ? WHERE id = ?', 
+                        (generate_password_hash(password), user['id']))
+            db.execute('DELETE FROM password_tokens WHERE token = ?', 
+                        (token, ))
+            db.commit()
 
-                mail = Mail(current_app)
-                mail.send_message(subject='Password reset',
-                    recipients=[user['email']],
-                    sender='Bebleo <noreply@bebleo.url>',
-                    body=render_template('emails/password_reset.txt', 
-                                         user=user))
+            mail = Mail(current_app)
+            mail.send_message(subject='Password reset',
+                recipients=[user['email']],
+                sender='Bebleo <noreply@bebleo.url>',
+                body=render_template('emails/password_reset.txt', 
+                                        user=user))
 
-                current_app.logger.info(f"Password reset for user with id {user['id']}.")
-                return redirect(url_for('home.index'))
-            else:
-                flash('Password and confirmation must match.')
+            current_app.logger.info(f"Password reset for user with id {user['id']}.")
+            return redirect(url_for('home.index'))
 
-        return render_template('auth/update_password.html', token=token)
+        return render_template('auth/update_password.html', token=token, form=form)
 
     except (TokenExpiredError, TokenInvalidError):
         flash('Token is incorrect or expired.')
@@ -127,71 +128,43 @@ def register():
         # There's a logged in user so no legitmate reason to register.
         abort(401)
 
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        given_name = request.form['given_name']
-        family_name = request.form['family_name']
-        password = request.form['password'].strip()
-        confirm = request.form['confirm'].strip()
-        
+    form = RegistrationForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        password = form.password.data
+
         db = get_db()
-        error = None
 
-        print(f"username being registered is {username} with {password}")
-
-        if not username:
-            error = 'Username cannot be empty.'
-        elif not password:
-            error = 'Password cannot be empty.'
-        elif password != confirm:
-            error = 'Password and confirmation must match.'
-        elif get_user(username=username) is not None:
-            error = 'Username is already used.'
-
-        if error is None:
-            # Insert the user into database
-            cur = db.cursor()
-            cur.execute(
+        if get_user(username=username) is not None:
+            form.username.errors.append('Username is already used.')
+        else:
+            db.execute(
                 'INSERT INTO users (email, given_name, family_name, password) VALUES (?, ?, ?, ?);', 
                 (username, given_name, family_name, generate_password_hash(password), ))
-            user_id = cur.lastrowid
             db.commit()
 
-            current_app.logger.info(f'Registered user with id {user_id}')
+            current_app.logger.info(f'Registered user with username {username}')
             return redirect(url_for('home.index'))
-        else:
-            flash(error)
 
-    return render_template('auth/register.html')
+    return render_template('auth/register.html', form=form)
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     """Login."""
-    session.pop('_flashes', None)
+    form = LoginForm(request.form)
 
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        error = None
-        user = get_user(username)
-
-        if not username:
-            error = 'Username cannot be empty.'
-        elif not password:
-            error = 'Password cannot be blank.'
-        elif (user is None) or (not check_password_hash(user['password'], password)):
-            error = 'Login incorrect, please try again.'
-        
-        if user['deactivated']:
+    if form.validate_on_submit(): 
+        if form._user['deactivated']:
             return redirect(url_for('auth.deactivated'))
-        elif not error:
-            session.clear()
-            session['user_id'] = user['id']
-            return redirect(url_for('home.index'))
-        else:
-            flash(error)
+            
+        session.clear()
+        session['user_id'] = form._user['id']
+        return redirect(url_for('home.index'))
 
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', form=form)
 
 @bp.route('/logout')
 def logout():
