@@ -5,13 +5,15 @@
 # December 13, 2019
 # -----------------------------------------------------
 
-from flask import (Blueprint, abort, current_app, flash, g, redirect,
+import json
+
+from flask import (Blueprint, abort, current_app, flash, g, jsonify, redirect,
                    render_template, request, url_for)
 from werkzeug.security import generate_password_hash
 
 from checklist_app.auth import admin_required, login_required
 from checklist_app.db import get_db
-from checklist_app.forms.admin_forms import AddUserForm
+from checklist_app.forms.admin_forms import AddUserForm, EditUserForm
 from checklist_app.models.user import get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -74,12 +76,15 @@ def list_users():
 @login_required
 def edit_user(id: int):
     """Edit the user with the id."""
+    form = EditUserForm()
     user = get_user(id=id)
     saved = False
 
     if not user:
         # ID doesn't exist in the database so return 404-Page Not Found.
         abort(404)
+
+    deactivated = user['deactivated'] if user['deactivated'] else 0
 
     # If the user isn't an admin check that the user id matches the logged in user.
     # If not then abort the request with a 401-Unauthorized error
@@ -88,16 +93,19 @@ def edit_user(id: int):
         if user['id'] != g.user['id']:
             abort(401)
 
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        given_name = request.form['given_name'].strip()
-        family_name = request.form['family_name'].strip()
-        is_admin = checked('is_admin')
-        account_flag = checked('account_flag')
+    if form.validate_on_submit():
+        username = form.username.data
+        given_name = form.given_name.data
+        family_name = form.family_name.data
+        is_admin = form.is_admin.data
+        account_flag = request.form.get('account_flag') if checked('account_flag') else 0
 
         db = get_db()
         error = None
-        deactivated = request.form['account_flag'] if account_flag else 0
+        if account_flag:
+            deactivated = max(account_flag)
+        else:
+            deactivated = 0
 
         if not username:
             error = 'Username must not be blank.'
@@ -128,7 +136,7 @@ def edit_user(id: int):
             db.commit()
             saved = True
 
-    return render_template('admin/edit_user.html', user=user, success=saved)
+    return render_template('admin/edit_user.html', form=form, deactivated=deactivated, user=user, success=saved)
 
 def validate_password(password_field='password', confirmation_field='confirm'):
     return request.form[password_field] == request.form[confirmation_field]
