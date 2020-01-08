@@ -45,7 +45,6 @@ def init_db_command():
     init_db()
     click.echo('Initialized database.')
 
-
 def init_app(app):
     """Register the close_db function for teardown."""
     app.teardown_appcontext(close_db)

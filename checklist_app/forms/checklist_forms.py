@@ -14,3 +14,6 @@ class CreateListForm(FlaskForm):
 
 class EditListForm(CreateListForm):
     pass
+
+class AddItemForm(FlaskForm):
+    item_text = StringField("Item Text", _name="item_text", default="")

@@ -263,3 +263,13 @@ textarea {
     border-radius: 3px;
     cursor: pointer;
 }
+.progressbar {
+    width: 50px;
+    border: thin solid lightgrey;
+    display: inline-block;
+    text-align: left;
+    margin-left: 0.5em;
+}
+.progress {
+    background-color: green;
+}
