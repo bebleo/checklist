@@ -114,8 +114,8 @@ def edit(id):
 
         if desc != checklist.header["description"]:
             change_history = (f"{g.user['given_name']} updated the "
-                              f"description from \""
-                              f"{checklist.header['description']}\" "
+                              f"description from "
+                              f"\"{checklist.header['description']}\" "
                               f"to \"{desc}\"")
             db.execute(
                 "UPDATE checklists SET [description] = ? WHERE id = ?",
