@@ -1,5 +1,6 @@
-# VSCode folder and settings
+# VSCode and development folder and settings
 .vscode/
+.devcontainer/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
