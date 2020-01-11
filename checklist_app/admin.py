@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash
 from checklist_app.auth import admin_required, login_required
 from checklist_app.db import get_db
 from checklist_app.forms.admin_forms import AddUserForm, EditUserForm
-from checklist_app.models.user import get_user
+from checklist_app.models import get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 

@@ -20,7 +20,7 @@ from checklist_app.forms import (LoginForm, RegistrationForm,
 from checklist_app.models.password_token import (
     TokenExpiredError, TokenInvalidError, save_token, validate_token)
 
-from .models.user import get_user
+from .models import get_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 

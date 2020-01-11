@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash
 from wtforms import BooleanField, PasswordField, StringField, ValidationError
 
-from checklist_app.models.user import get_user
+from checklist_app.models import get_user
 
 from .shared_validators import (confirm_req, password_conf, password_req,
                                 username_combo, username_email)

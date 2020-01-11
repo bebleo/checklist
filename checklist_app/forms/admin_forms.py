@@ -4,7 +4,7 @@ from wtforms import (BooleanField, PasswordField, SelectMultipleField,
 from wtforms.validators import Email, EqualTo, InputRequired
 from wtforms.widgets import ListWidget, CheckboxInput
 
-from checklist_app.models.user import AccountStatus
+from checklist_app.models import AccountStatus
 
 
 class MultiCheckboxField(SelectMultipleField):
