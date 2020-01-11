@@ -15,12 +15,14 @@ class AccountStatus(IntEnum):
     VERIFICATION_REQUIRED = 2
     PASSWORD_RESET_REQUIRED = 3
 
+
 class User(object):
     """User object here as a stub for future development."""
     def __init__(self):
         pass
 
-def get_user(username:str = None, id:int = None):
+
+def get_user(username=None, id=None):
     """
     Get the user identified by the id or the username.
     Return None if the user does not exist.

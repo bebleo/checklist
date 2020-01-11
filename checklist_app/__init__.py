@@ -12,7 +12,7 @@ from flask import Flask
 # from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 
-from . import admin, auth, checklist, db, home
+from checklist_app import admin, auth, checklist, db, home
 
 csrf = CSRFProtect()
 

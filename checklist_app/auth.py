@@ -14,11 +14,12 @@ from flask import (Blueprint, abort, current_app, flash, g, redirect,
 from flask_mail import Mail
 from werkzeug.security import generate_password_hash
 
-from .db import get_db
-from .forms import (LoginForm, RegistrationForm, SendPasswordChangeForm,
-                    UpdatePasswordForm)
-from .models.password_token import (TokenExpiredError, TokenInvalidError,
-                                    save_token, validate_token)
+from checklist_app.db import get_db
+from checklist_app.forms import (LoginForm, RegistrationForm,
+                                 SendPasswordChangeForm, UpdatePasswordForm)
+from checklist_app.models.password_token import (
+    TokenExpiredError, TokenInvalidError, save_token, validate_token)
+
 from .models.user import get_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
