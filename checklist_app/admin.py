@@ -88,10 +88,9 @@ def edit_user(id: int):
 
     deactivated = user['deactivated'] if user['deactivated'] else 0
 
-    # If the user isn't an admin check that the user id matches the logged in user.
+    # If the user isn't an admin check that user id matches the logged in user.
     # If not then abort the request with a 401-Unauthorized error
     if not g.user['is_admin']:
-        current_app.logger.debug(f"user with id {g.user['id']} is editing user with id {user['id']}.")
         if user['id'] != g.user['id']:
             abort(401)
 
@@ -100,7 +99,10 @@ def edit_user(id: int):
         given_name = form.given_name.data
         family_name = form.family_name.data
         is_admin = form.is_admin.data
-        account_flag = request.form.get('account_flag') if checked('account_flag') else 0
+        if checked('account_flag'):
+            account_flag = request.form.get('account_flag')
+        else:
+            account_flag = 0
 
         db = get_db()
         error = None
@@ -124,21 +126,17 @@ def edit_user(id: int):
         else:
             db.execute(
                 """UPDATE users SET
-                      email = ?,
-                      given_name = ?,
-                      family_name = ?,
-                      is_admin = ?,
-                      deactivated = ?
-                   WHERE
-                      id = ?
-                """,
+                   email = ?, given_name = ?, family_name = ?,
+                   is_admin = ?, deactivated = ?
+                   WHERE id = ?;""",
                 (username, given_name, family_name, is_admin, deactivated, id)
             )
             user = user_by_username(id=id)
             db.commit()
             saved = True
 
-    return render_template('admin/edit_user.html', form=form, deactivated=deactivated, user=user, success=saved)
+    return render_template('admin/edit_user.html', form=form, user=user,
+                           deactivated=deactivated, success=saved)
 
 
 def validate_password(password_field='password', confirmation_field='confirm'):
@@ -163,13 +161,18 @@ def add_user():
 
         if user_check:
             # Username already in use.
-            error = f"Username already exists. <a href=\"{url_for('admin.edit_user', id=user_check['id'])}\">Edit</a>"
+            error = (f"Username already exists. <a href=\"",
+                     f"{url_for('admin.edit_user', id=user_check['id'])}",
+                     f"\">Edit</a>")
             flash(error)
         else:
             db = get_db()
             db.execute(
-                """INSERT INTO users (email, given_name, family_name, password, is_admin) VALUES (?, ?, ?, ?, ?);""",
-                (username, given_name, family_name, generate_password_hash(password), is_admin, )
+                """INSERT INTO users
+                   (email, given_name, family_name, password, is_admin)
+                   VALUES (?, ?, ?, ?, ?);""",
+                (username, given_name, family_name,
+                 generate_password_hash(password), is_admin, )
             )
             db.commit()
             saved = True

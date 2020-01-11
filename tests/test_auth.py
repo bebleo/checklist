@@ -141,6 +141,13 @@ def test_post_login_diabled_user(client):
     assert '/auth/disabled' in response.headers['Location']
 
 
+def test_post_login_bad_user(client):
+    response = client.post('/auth/login',
+                           data={"username": "not_real@bebleo.url",
+                                 "password": ""})
+    assert b'Login incorrect, please try again.' in response.data
+
+
 def test_logout(client):
     response = client.get('/auth/logout')
     assert response.status_code == 302
