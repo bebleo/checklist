@@ -9,7 +9,7 @@ INSERT INTO users (email, password, deactivated)
 VALUES
   ('disabled@bebleo.url', 'pbkdf2:sha256:50000$TCI4GzcX$0de171a4f4dac32e3364c7ddc7c14f3e2fa61f2d17574483f7ffbb431b4acb2f', 1);
 
-INSERT INTO checklists (title, [description], created_by, assigned_to)
+INSERT INTO checklists (title, description, created_by, assigned_to)
 VALUES 
   ('List no. 1', 'A list inserted for testing purposes', 1, 1),
   ('List no. 2', '', 2, 2);
