@@ -5,10 +5,8 @@
 # December 13, 2019
 # -----------------------------------------------------
 
-import json
-
-from flask import (Blueprint, abort, current_app, flash, g, jsonify, redirect,
-                   render_template, request, url_for)
+from flask import (Blueprint, abort, current_app, flash, g, render_template,
+                   request, url_for)
 from werkzeug.security import generate_password_hash
 
 from checklist_app.auth import admin_required, login_required
@@ -17,6 +15,7 @@ from checklist_app.forms.admin_forms import AddUserForm, EditUserForm
 from checklist_app.models.user import get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
+
 
 def checked(field):
     """
@@ -31,6 +30,7 @@ def checked(field):
         return True
 
     return False
+
 
 def user_by_username(username=None, id=None):
     """
@@ -56,12 +56,13 @@ def user_by_username(username=None, id=None):
 
     return user
 
+
 @bp.route('/users')
 @admin_required
 def list_users():
     """
     List all of the users in the application
-    
+
     Returns
     -------
     Returns the rendered view that lists all of the users
@@ -71,6 +72,7 @@ def list_users():
     users = db.execute('SELECT * FROM users').fetchall()
 
     return render_template('admin/users.html', users=users)
+
 
 @bp.route('/users/<int:id>', methods=('GET', 'POST'))
 @login_required
@@ -121,15 +123,15 @@ def edit_user(id: int):
             flash(error)
         else:
             db.execute(
-                """UPDATE users SET 
+                """UPDATE users SET
                       email = ?,
-                      given_name = ?, 
-                      family_name = ?, 
-                      is_admin = ?, 
+                      given_name = ?,
+                      family_name = ?,
+                      is_admin = ?,
                       deactivated = ?
-                   WHERE 
+                   WHERE
                       id = ?
-                """, 
+                """,
                 (username, given_name, family_name, is_admin, deactivated, id)
             )
             user = user_by_username(id=id)
@@ -138,8 +140,10 @@ def edit_user(id: int):
 
     return render_template('admin/edit_user.html', form=form, deactivated=deactivated, user=user, success=saved)
 
+
 def validate_password(password_field='password', confirmation_field='confirm'):
     return request.form[password_field] == request.form[confirmation_field]
+
 
 @bp.route('/users/new', methods=('GET', 'POST'))
 @admin_required
@@ -147,7 +151,7 @@ def add_user():
     """Add a user to the solution."""
     saved = False
     form = AddUserForm()
-    
+
     if form.validate_on_submit():
         username = form.username.data
         given_name = form.given_name.data
@@ -169,5 +173,5 @@ def add_user():
             )
             db.commit()
             saved = True
-  
+
     return render_template('admin/add_user.html', form=form, success=saved)

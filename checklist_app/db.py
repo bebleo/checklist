@@ -5,13 +5,11 @@
 # December 8, 2019
 # -------------------------------------------
 
-import os
 import sqlite3
 
 import click
 from flask import current_app, g
 from flask.cli import with_appcontext
-from werkzeug.security import generate_password_hash
 
 
 def get_db():
@@ -25,12 +23,14 @@ def get_db():
 
     return g.db
 
+
 def close_db(e=None):
     """Removes the database from the globals and closes it."""
     db = g.pop('db', None)
 
     if db is not None:
         db.close()
+
 
 def init_db():
     """Initializes the database."""
@@ -39,11 +39,13 @@ def init_db():
     with current_app.open_resource('schemas/schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
+
 @click.command('init-db')
 @with_appcontext
 def init_db_command():
     init_db()
     click.echo('Initialized database.')
+
 
 def init_app(app):
     """Register the close_db function for teardown."""
