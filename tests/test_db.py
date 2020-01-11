@@ -17,11 +17,14 @@ def test_get_close_db(app):
 
     assert "closed" in str(e.value)
 
+
 def test_check_admin_user_added(app):
     with app.app_context():
         db = get_db()
-        adminuser = db.execute('SELECT * FROM users WHERE email = ?;', ('test@bebleo.url',)).fetchone()
+        adminuser = db.execute('SELECT * FROM users WHERE email = ?;',
+                               ('test@bebleo.url',)).fetchone()
         assert adminuser is not None
+
 
 def test_init_db_cli(runner, monkeypatch):
     class Recorder(object):

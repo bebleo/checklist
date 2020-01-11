@@ -3,20 +3,23 @@ import pytest
 from checklist_app.db import get_db
 from checklist_app.models.user import get_user
 
+
 def test_get_send_password_change(client):
     response = client.get('/auth/forgotpassword')
     assert b'Send Password Reset' in response.data
 
+
 @pytest.mark.parametrize(
-    "username, expected", 
+    "username, expected",
     [
-        ("false@bebleo.url", b"No user found"), 
+        ("false@bebleo.url", b"No user found"),
         ("admin@bebleo.url", b"Password Sent")
     ]
 )
 def test_post_send_password_change(client, username, expected):
-    response = client.post('/auth/forgotpassword', data = {"username": username})
+    response = client.post('/auth/forgotpassword', data={"username": username})
     assert expected in response.data
+
 
 def test_forgot_password(app, client):
     with app.app_context():
@@ -35,13 +38,14 @@ def test_forgot_password(app, client):
 
     response = client.post(
         f'/auth/forgotpassword/{token}',
-        data = {
+        data={
             "username": "test@bebleo.url",
             "password": "password",
             "confirm": "password"
         }
     )
     assert response.status_code == 302
+
 
 @pytest.mark.parametrize(
     "registration_info, expected",
@@ -54,7 +58,7 @@ def test_forgot_password(app, client):
                 "password": "password",
                 "confirm": "password"
             },
-            b'You should be redirected automatically to target URL: <a href="/">/</a>.'
+            b'You should be redirected automatically to target'
         ),
         (
             {
@@ -102,14 +106,17 @@ def test_register(client, registration_info, expected):
     response = client.post('/auth/register', data=registration_info)
     assert expected in response.data
 
+
 def test_register_already_logged_in(client, auth):
     auth.login()
     response = client.get('/auth/register')
     assert response.status_code == 401
 
+
 def test_get_login(client):
     response = client.get('/auth/login')
     assert b'Register' in response.data
+
 
 @pytest.mark.parametrize(
     "username, password, expected",
@@ -119,14 +126,20 @@ def test_get_login(client):
     ]
 )
 def test_post_login(client, username, password, expected):
-    response = client.post('/auth/login', data={"username": username, "password": password})
+    response = client.post('/auth/login',
+                           data={"username": username, "password": password})
     assert response.status_code == expected
 
+
 def test_post_login_diabled_user(client):
-    """If a disabled user attempts to login direct them to the account disabled page."""
-    response = client.post('/auth/login', data={"username": "disabled@bebleo.url", "password": "test"})
+    """If a disabled user attempts to login direct them to the
+    account disabled page."""
+    response = client.post('/auth/login',
+                           data={"username": "disabled@bebleo.url",
+                                 "password": "test"})
     assert response.status_code == 302
     assert '/auth/disabled' in response.headers['Location']
+
 
 def test_logout(client):
     response = client.get('/auth/logout')

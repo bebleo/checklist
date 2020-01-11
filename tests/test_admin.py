@@ -9,6 +9,7 @@ from checklist_app.admin import user_by_username
 from checklist_app.db import get_db
 from checklist_app.models.user import AccountStatus
 
+login_test_paths = ['/admin/users', '/admin/users/1', '/admin/users/new']
 test_add_user_data = [
     (
         {
@@ -51,6 +52,7 @@ test_add_user_data = [
     )
 ]
 
+
 def test_user_by_username(app):
     with app.app_context():
         user = user_by_username(username='test@bebleo.url')
@@ -63,11 +65,13 @@ def test_user_by_username(app):
             user = user_by_username()
             assert 'No username or id' in str(e.value)
 
+
 def test_list_users(client, auth):
     auth.login(username="admin@bebleo.url", password="admin")
     response = client.get('/admin/users')
     assert response.status_code == 200
     assert b'<h2>Users</h2>' in response.data
+
 
 def test_get_edit_user(client, auth):
     auth.login(username="admin@bebleo.url", password="admin")
@@ -77,6 +81,7 @@ def test_get_edit_user(client, auth):
 
     response = client.get('/admin/users/5')
     assert response.status_code == 404
+
 
 def test_edit_user(app, client, auth):
     # Test that the username needs to be there
@@ -91,7 +96,7 @@ def test_edit_user(app, client, auth):
         response = client.post('/admin/users/3', data=data)
         assert b'Username must not be blank.' in response.data
         user = db.execute("SELECT * FROM users WHERE id = ?", (3,)).fetchone()
-        assert user['email'] is not ""
+        assert user['email'] != ""
 
     # Test that a user cannot remove their own admin flag
     with app.app_context():
@@ -103,7 +108,7 @@ def test_edit_user(app, client, auth):
         }
         auth.login(username="admin@bebleo.url", password="admin")
         response = client.post('/admin/users/1', data=data)
-        assert b'Cannot remove admin rights from your own account' in response.data
+        assert b'Cannot remove admin rights from your own' in response.data
         user = db.execute("SELECT * FROM users WHERE id = ?", (1,)).fetchone()
         assert user['is_admin']
 
@@ -125,16 +130,18 @@ def test_edit_user(app, client, auth):
         assert user['family_name'] == "Bebleo-User"
         assert user['is_admin']
 
+
 def test_get_add_user(client, auth):
     auth.login(username="admin@bebleo.url", password="admin")
     response = client.get('/admin/users/new')
     assert b'Add User' in response.data
 
+
 @pytest.mark.parametrize("info, expected, id, is_admin", test_add_user_data)
 def test_add_user(app, client, auth, info, expected, id, is_admin):
-    auth.login(username = "admin@bebleo.url", password = "admin")
+    auth.login(username="admin@bebleo.url", password="admin")
     print(f"{info['username']}")
-    response = client.post('/admin/users/new', data = info)
+    response = client.post('/admin/users/new', data=info)
     assert expected in response.data
 
     with app.app_context():
@@ -148,6 +155,7 @@ def test_add_user(app, client, auth, info, expected, id, is_admin):
 
         assert added_user['id'] == id
         assert added_user['is_admin'] == is_admin
+
 
 def test_add_user_mismatched_passwords(client, auth):
     info = {
@@ -163,6 +171,7 @@ def test_add_user_mismatched_passwords(client, auth):
     auth.login(username="admin@bebleo.url", password="admin")
     response = client.post('/admin/users/new', data=info)
     assert expected in response.data
+
 
 def test_disable_user_on_edit_success(app, client, auth):
     """Disable a user."""
@@ -185,6 +194,7 @@ def test_disable_user_on_edit_success(app, client, auth):
 
         record = db.execute("SELECT * FROM users WHERE id=2").fetchone()
         assert record['deactivated'] == AccountStatus.DEACTIVATED
+
 
 def test_disable_user_on_edit_not_allowed(app, client, auth):
     # We don't want it to be the case that users can accidentally disable
@@ -210,13 +220,15 @@ def test_disable_user_on_edit_not_allowed(app, client, auth):
         assert not user['deactivated']
         assert user['deactivated'] == AccountStatus.ACTIVE
 
-@pytest.mark.parametrize("path", ['/admin/users', '/admin/users/1', '/admin/users/new'])
+
+@pytest.mark.parametrize("path", login_test_paths)
 def test_login_required(client, path):
     response = client.get(path)
     assert response.status_code == 302
     assert '/auth/login' in response.headers['Location']
 
-@pytest.mark.parametrize("path", ['/admin/users', '/admin/users/1', '/admin/users/new'])
+
+@pytest.mark.parametrize("path", login_test_paths)
 def test_admin_required(client, auth, path):
     auth.login()
     response = client.get(path, follow_redirects=True)

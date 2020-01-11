@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------
-# Factory for the checklist application closely following the 
+# Factory for the checklist application closely following the
 # tutorial for Flask from the Pallets project site
 #
 # James Warne
@@ -9,12 +9,13 @@
 import os
 
 from flask import Flask
-from flask_mail import Mail
+# from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 
 from . import admin, auth, checklist, db, home
 
 csrf = CSRFProtect()
+
 
 def create_app(test_config=None):
     """Creates the flask app and initilizes the instance folder

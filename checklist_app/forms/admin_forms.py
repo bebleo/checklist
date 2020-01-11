@@ -31,7 +31,8 @@ class AddUserForm(BaseUserForm):
         "password",
         validators=[
             InputRequired("Password cannot be blank."),
-            EqualTo("confirm", message="Password and confirmation must match.")
+            EqualTo("confirm",
+                    message="Password and confirmation must match.")
         ]
     )
     confirm = PasswordField("confirm")
@@ -42,11 +43,12 @@ class EditUserForm(BaseUserForm):
         label="Account Flags",
         _name="account_flag",
         coerce=int,
-        choices = [
-            (AccountStatus.DEACTIVATED.value,"Account disabled"),
-            (AccountStatus.PASSWORD_RESET_REQUIRED.value,"User must change password on next login"),
-            (AccountStatus.VERIFICATION_REQUIRED.value,"Account verification required")
+        choices=[
+            (AccountStatus.DEACTIVATED.value,
+                "Account disabled"),
+            (AccountStatus.PASSWORD_RESET_REQUIRED.value,
+                "User must change password on next login"),
+            (AccountStatus.VERIFICATION_REQUIRED.value,
+                "Account verification required")
         ]
     )
-
-        
