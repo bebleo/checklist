@@ -23,7 +23,7 @@
                 <a href="{{ url_for('home.contact') }}">Contact</a>
             {% if g.user %}
                 <a href="{{ url_for('checklist.index') }}">Lists</a>
-            {% if g.user['is_admin'] %}
+            {% if g.user.is_admin %}
                 <a href="{{ url_for('admin.list_users') }}">Admin</a>
             {% endif %}
                 <a href="{{ url_for('auth.logout') }}">Logout</a>

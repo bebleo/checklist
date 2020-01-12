@@ -5,14 +5,13 @@
 # December 13, 2019
 # -----------------------------------------------------
 
-from flask import (Blueprint, abort, current_app, flash, g, render_template,
-                   request, url_for)
+from flask import Blueprint, abort, flash, g, render_template, request, url_for
 from werkzeug.security import generate_password_hash
 
+from checklist_app import db
 from checklist_app.auth import admin_required, login_required
-from checklist_app.db import get_db
-from checklist_app.forms.admin_forms import AddUserForm, EditUserForm
-from checklist_app.models import get_user
+from checklist_app.forms import AddUserForm, EditUserForm
+from checklist_app.models import AccountStatus, User, get_user
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -32,31 +31,6 @@ def checked(field):
     return False
 
 
-def user_by_username(username=None, id=None):
-    """
-    Get the user identified by the id or the username.
-    Return None if the user does not exist.
-    """
-    db = get_db()
-
-    if id:
-        variable = "id"
-        values = (id, )
-    elif username:
-        variable = 'email'
-        values = (username, )
-    else:
-        current_app.logger.error('No argument supplied to fetch user from db.')
-        raise ValueError("No username or id supplied to get user.")
-
-    user = db.execute(
-        f'SELECT * FROM users WHERE {variable} = ?',
-        values
-    ).fetchone()
-
-    return user
-
-
 @bp.route('/users')
 @admin_required
 def list_users():
@@ -68,9 +42,7 @@ def list_users():
     Returns the rendered view that lists all of the users
     in the application.
     """
-    db = get_db()
-    users = db.execute('SELECT * FROM users').fetchall()
-
+    users = User.query.all()
     return render_template('admin/users.html', users=users)
 
 
@@ -82,17 +54,17 @@ def edit_user(id: int):
     user = get_user(id=id)
     saved = False
 
+    # If the user isn't an admin check that user id matches the logged in user.
+    # If not then abort the request with a 401-Unauthorized error
+    if not g.user.is_admin:
+        if id != g.user.id:
+            abort(401)
+
     if not user:
         # ID doesn't exist in the database so return 404-Page Not Found.
         abort(404)
 
-    deactivated = user['deactivated'] if user['deactivated'] else 0
-
-    # If the user isn't an admin check that user id matches the logged in user.
-    # If not then abort the request with a 401-Unauthorized error
-    if not g.user['is_admin']:
-        if user['id'] != g.user['id']:
-            abort(401)
+    deactivated = 0
 
     if form.validate_on_submit():
         username = form.username.data
@@ -100,23 +72,19 @@ def edit_user(id: int):
         family_name = form.family_name.data
         is_admin = form.is_admin.data
         if checked('account_flag'):
-            account_flag = request.form.get('account_flag')
+            account_flag = int(request.form.get('account_flag'))
         else:
             account_flag = 0
 
-        db = get_db()
         error = None
-        if account_flag:
-            deactivated = max(account_flag)
-        else:
-            deactivated = 0
+        deactivated = account_flag
 
         if not username:
             error = 'Username must not be blank.'
-        elif g.user['id'] == id:
+        elif g.user.id == id:
             # Make it impossible to remove oneself as an admin.
             # This ensures that there is always at least on admin.
-            if user['is_admin'] and not is_admin:
+            if user.is_admin and not is_admin:
                 error = 'Cannot remove admin rights from your own account.'
             elif account_flag:
                 error = "Cannot deactivate your own account."
@@ -124,23 +92,17 @@ def edit_user(id: int):
         if error:
             flash(error)
         else:
-            db.execute(
-                """UPDATE users SET
-                   email = ?, given_name = ?, family_name = ?,
-                   is_admin = ?, deactivated = ?
-                   WHERE id = ?;""",
-                (username, given_name, family_name, is_admin, deactivated, id)
-            )
-            user = user_by_username(id=id)
-            db.commit()
+            user.email = username
+            user.given_name = given_name
+            user.family_name = family_name
+            user.is_admin = is_admin
+            user.account_status = AccountStatus(deactivated)
+            db.session.add(user)
+            db.session.commit()
             saved = True
 
     return render_template('admin/edit_user.html', form=form, user=user,
                            deactivated=deactivated, success=saved)
-
-
-def validate_password(password_field='password', confirmation_field='confirm'):
-    return request.form[password_field] == request.form[confirmation_field]
 
 
 @bp.route('/users/new', methods=('GET', 'POST'))
@@ -162,19 +124,15 @@ def add_user():
         if user_check:
             # Username already in use.
             error = (f"Username already exists. <a href=\"",
-                     f"{url_for('admin.edit_user', id=user_check['id'])}",
+                     f"{url_for('admin.edit_user', id=user_check.id)}",
                      f"\">Edit</a>")
             flash(error)
         else:
-            db = get_db()
-            db.execute(
-                """INSERT INTO users
-                   (email, given_name, family_name, password, is_admin)
-                   VALUES (?, ?, ?, ?, ?);""",
-                (username, given_name, family_name,
-                 generate_password_hash(password), is_admin, )
-            )
-            db.commit()
+            user = User(email=username, given_name=given_name,
+                        family_name=family_name, is_admin=is_admin,
+                        password=generate_password_hash(password))
+            db.session.add(user)
+            db.session.commit()
             saved = True
 
     return render_template('admin/add_user.html', form=form, success=saved)

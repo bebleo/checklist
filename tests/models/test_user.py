@@ -2,11 +2,12 @@ import pytest
 
 from checklist_app.models.user import AccountStatus, get_user, User
 
+
 def test_get_user(app):
     with app.app_context():
         user = get_user(username='test@bebleo.url')
         assert user is not None
-        
+
         user = get_user('test@bebleo.url')
         assert user is not None
 
@@ -20,9 +21,11 @@ def test_get_user(app):
             user = get_user()
             assert 'No username or id' in str(e.value)
 
+
 def test_initialize_new_user():
     user = User()
     assert user is not None
+
 
 def test_account_status():
     deactivated = AccountStatus.ACTIVE

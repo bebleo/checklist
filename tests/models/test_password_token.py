@@ -1,19 +1,17 @@
-import pytest
 from datetime import datetime, timedelta
 
-from checklist_app.db import get_db
-from checklist_app.models.password_token import (TokenExpiredError,
-                                                 TokenInvalidError,
-                                                 save_token,
-                                                 validate_token)
+import pytest
+
+from checklist_app.models import (PasswordToken, TokenExpiredError,
+                                  TokenInvalidError, save_token,
+                                  validate_token)
 
 
 def test_valid(app):
     with app.app_context():
-        db = get_db()
         token = save_token(1)
-        count = db.execute("SELECT COUNT(*) FROM password_tokens").fetchone()
-        assert count[0] == 1
+        tokens = PasswordToken.query.all()
+        assert len(tokens) == 1
         assert validate_token(token)
 
 

@@ -22,8 +22,9 @@ class LoginForm(FlaskForm):
             raise ValidationError(self.error_msg)
 
     def validate_password(self, field):
-        if not check_password_hash(self._user['password'], field.data):
-            raise ValidationError(self.error_msg)
+        if self._user:
+            if not check_password_hash(self._user.password, field.data):
+                raise ValidationError(self.error_msg)
 
 
 class RegistrationForm(FlaskForm):

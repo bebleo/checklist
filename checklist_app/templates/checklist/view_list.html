@@ -1,14 +1,14 @@
 {% extends 'base_form.html' %}
 
-{% block title %}{{ checklist.header['title'] }}{% endblock %}
+{% block title %}{{ checklist.title }}{% endblock %}
 
 {% block sidebar %}
     <div class="sidebar">
         <strong>Tasks</strong>
         <hr>
         <a href="/">Mark complete</a><br>
-        <a href="{{ url_for('checklist.edit', id=checklist.header['id']) }}">Edit</a><br>
-        <a href="{{ url_for('checklist.delete', id=checklist.header['id'] )}}">Delete</a><br>
+        <a href="{{ url_for('checklist.edit', id=checklist.id) }}">Edit</a><br>
+        <a href="{{ url_for('checklist.delete', id=checklist.id )}}">Delete</a><br>
         &nbsp;<br>
         <strong>List</strong>
         <hr>
@@ -17,7 +17,7 @@
         &nbsp;<br>
         <strong>Settings</strong>
         <hr>
-        <a href="{{ url_for('admin.edit_user', id=g.user['id']) }}">User</a><br>
+        <a href="{{ url_for('admin.edit_user', id=g.user.id) }}">User</a><br>
     </div>
 {% endblock %}
 
@@ -28,20 +28,20 @@
                 window.location.href = url;
             }
         </script>
-        <h2>{{ checklist.header['title'] }}</h2>
-    {% if checklist.header['description'] %}
-        <p>{{ checklist.header['description'] }}</p>
+        <h2>{{ checklist.title }}</h2>
+    {% if checklist.description %}
+        <p>{{ checklist.description }}</p>
     {% endif %}
     
     {% for item in checklist.items %}
-        {% set redirect_url = url_for('checklist.toggle_item', id=checklist.header['id'], item_id=item['id']) %}
+        {% set redirect_url = url_for('checklist.toggle_item', id=checklist.id, item_id=item.id) %}
         <div id="list_items">
-            <input type="checkbox" onchange="redirect('{{ redirect_url }}');" {% if item['done'] %}checked{% endif %}> {{ item['item_text'] }}
+            <input type="checkbox" onchange="redirect('{{ redirect_url }}');" {% if item.done %}checked{% endif %}> {{ item.text }}
         </div>
     {% endfor %}
         <!-- Form to add an item -->
         <!-- <h3>Add an item:</h3> -->
-        <form class="inline-form width-50" action="{{ url_for('checklist.add_item', id=checklist.header['id']) }}" method="post">
+        <form class="inline-form width-50" action="{{ url_for('checklist.add_item', id=checklist.id) }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="checkbox" disabled>
             <input type="text" name="item_text" id="item_text" placeholder="Enter a new item to be added to the list." required>
@@ -50,9 +50,9 @@
         <div id="list_history">
             <h3>History</h3>
             <ol>
-    {% for change in checklist.history %}
-                <li>{{ change['change_date'] }} - {{ change['change_description'] }}</li>
-    {% endfor %}
+            {% for change in checklist.history %}
+                <li>{{ change.created.strftime('%Y-%m-%d %H:%M') }} - {{ change.description }}</li>
+            {% endfor %}
             </ol>
         </div>
 {% endblock %}

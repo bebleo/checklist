@@ -1,52 +1,17 @@
-from flask import (Blueprint, abort, current_app, flash, g, redirect,
-                   render_template, request, url_for)
+from flask import (Blueprint, abort, flash, g, redirect, render_template,
+                   request, url_for)
 
+from checklist_app import db
 from checklist_app.auth import login_required
-from checklist_app.db import get_db
-from checklist_app.forms.checklist_forms import (AddItemForm, CreateListForm,
-                                                 EditListForm)
+from checklist_app.forms import AddItemForm, CreateListForm, EditListForm
+from checklist_app.models import Checklist, ChecklistItem
 
 bp = Blueprint('checklist', __name__, url_prefix='/checklist')
 
 
-class Checklist:
-    def __init__(self):
-        self.header = None
-        self.items = None
-        self.history = None
-
-    def percent_complete(self):
-        """Return the percentage complete of the items on a checklist."""
-        value = 0
-
-        if self.items:
-            value = sum([1 for i in self.items if i['done']]) / len(self.items)
-
-        return value
-
-
 def get_checklist(id):
     """Gets the checklist identified by the id."""
-    db = get_db()
-    checklist = Checklist()
-
-    checklist.header = db.execute(
-        'SELECT * FROM checklists WHERE id = ?',
-        (id, )
-    ).fetchone()
-
-    if checklist.header:
-        # Get the items
-        checklist.items = db.execute(
-            'SELECT * FROM checklist_items WHERE checklist_id = ? ORDER BY id',
-            (checklist.header['id'], )
-        ).fetchall()
-        checklist.history = db.execute(
-            """SELECT * FROM checklist_history
-               WHERE checklist_id = ? ORDER BY change_date""",
-            (checklist.header['id'], )
-        ).fetchall()
-
+    checklist = Checklist.query.filter_by(id=id).first_or_404()
     return checklist
 
 
@@ -56,27 +21,16 @@ def create():
     form = CreateListForm()
 
     if form.validate_on_submit():
-        db = get_db()
-        cur = db.cursor()
-        cur.execute(
-            """INSERT INTO checklists
-               (title, [description], created_by, assigned_to)
-               VALUES (?, ?, ?, ?)""",
-            (form.list_title.data, form.list_description.data,
-             g.user['id'], g.user['id'])
+        checklist = Checklist(
+            title=form.list_title.data,
+            description=form.list_description.data,
+            created_by=g.user,
+            assigned_to=g.user
         )
-        list_id = cur.lastrowid
-        change_history = (f"{g.user['given_name']} created the list called, "
-                          f"\"{form.list_title.data}\".")
-        cur.execute(
-            """INSERT INTO checklist_history
-               (change_description, checklist_id, user_id)
-               VALUES (?, ?, ?);""",
-            (change_history, list_id, g.user['id'])
-        )
-        db.commit()
+        db.session.add(checklist)
+        db.session.commit()
 
-        return redirect(url_for('checklist.view', id=list_id))
+        return redirect(url_for('checklist.view', id=checklist.id))
 
     return render_template('checklist/create.html', header=None, form=form)
 
@@ -86,53 +40,19 @@ def create():
 def edit(id):
     """Edit the checklist header with primary key matchig the id."""
     form = EditListForm()
-    log = current_app.logger
 
-    db = get_db()
     checklist = get_checklist(id)
 
-    if checklist is None:
-        abort(401)
-
     if form.validate_on_submit():
-        title = form.list_title.data
-        desc = form.list_description.data
+        checklist.title = form.list_title.data
+        checklist.description = form.list_description.data
+        db.session.add(checklist)
+        db.session.commit()
 
-        if title != checklist.header["title"]:
-            log.debug(f"{title} not {checklist.header['title']}")
-            change_history = (f"{g.user['given_name']} updated the list title "
-                              f"from \"{checklist.header['title']}\" "
-                              f"to \"{title}\".")
-            db.execute("UPDATE checklists SET title = ? WHERE id = ?",
-                       (title, id,))
-            db.execute(
-                """INSERT INTO checklist_history
-                (change_description, checklist_id, user_id)
-                VALUES (?, ?, ?);""",
-                (change_history, checklist.header['id'], g.user['id'],)
-            )
-
-        if desc != checklist.header["description"]:
-            change_history = (f"{g.user['given_name']} updated the "
-                              f"description from "
-                              f"\"{checklist.header['description']}\" "
-                              f"to \"{desc}\"")
-            db.execute(
-                "UPDATE checklists SET [description] = ? WHERE id = ?",
-                (desc, id,)
-            )
-            db.execute(
-                """INSERT INTO checklist_history
-                   (change_description, checklist_id, user_id)
-                   VALUES (?, ?, ?);""",
-                (change_history, checklist.header['id'], g.user['id'],)
-            )
-
-        db.commit()
         return redirect(url_for('checklist.view', id=id))
 
-    form.list_title.data = checklist.header['title']
-    form.list_description.data = checklist.header['description']
+    form.list_title.data = checklist.title
+    form.list_description.data = checklist.description
     return render_template('checklist/create.html', form=form)
 
 
@@ -140,11 +60,7 @@ def edit(id):
 @login_required
 def delete(id):
     """Mark the checklist identified by the id as deleted."""
-    db = get_db()
     checklist = get_checklist(id)
-
-    if checklist is None:
-        abort(404)
 
     if request.method == 'POST':
         # Check that the confirmation has been given and return.
@@ -153,29 +69,15 @@ def delete(id):
         if not confirm_delete:
             abort(401)
 
-        # TODO Handle the actual deletion.
-        db.execute(
-            "UPDATE checklists SET is_deleted = ? WHERE id = ?",
-            (True, id,))
-        db.execute(
-            """INSERT INTO checklist_history
-               (change_description, checklist_id, user_id)
-               VALUES (?, ?, ?);""",
-            (
-                (f"{g.user['given_name']} deleted the \""
-                 f"{checklist.header['title']}\" checklist."),
-                id,
-                g.user['id']
-            )
-        )
-        db.commit()
+        checklist.is_deleted = True
+        db.session.add(checklist)
+        db.session.commit()
 
         # redirect the user to their list of checklists.
         return redirect(url_for('checklist.index'))
 
     # Create a little confirmation form and return it as a message
-    confirm = render_template('checklist/partial/delete.html', id=id)
-    flash(confirm)
+    flash(render_template('checklist/partial/delete.html', id=id))
     return redirect(url_for('checklist.view', id=id))
 
 
@@ -183,13 +85,10 @@ def delete(id):
 @bp.route('')
 @login_required
 def index():
-    db = get_db()
-    checklists = [get_checklist(r['id']) for r in db.execute(
-        """SELECT id FROM checklists
-           WHERE created_by = ? AND is_deleted = False""",
-        (g.user['id'],)
-    ).fetchall()]
-
+    checklists = Checklist.query.filter_by(
+        created_by=g.user,
+        is_deleted=False
+    ).all()
     return render_template('checklist/index.html', lists=checklists)
 
 
@@ -197,57 +96,21 @@ def index():
 @login_required
 def view(id):
     checklist = get_checklist(id)
-
-    if checklist.header:
-        return render_template('checklist/view_list.html', checklist=checklist)
-
-    # No checklist with the ID so return a 404 - Not Found error.
-    abort(404)
+    return render_template('checklist/view_list.html', checklist=checklist)
 
 
 @bp.route('/<int:id>/check/<int:item_id>')
 @login_required
 def toggle_item(id, item_id):
-    db = get_db()
     checklist = get_checklist(id)
 
     if checklist:
         # Get the current state...
-        current = [i for i in checklist.items if i['id'] == item_id]
-        if current:
-            current = current[0]
-        else:
-            abort(404)
-
-        # Switches whether this is finished or not.
-        complete = not current['done']
-
-        change_history = '{} unchecked {}'
-        if complete:
-            change_history = '{} checked {}'
-
-        change_history = change_history.format(g.user['given_name'],
-                                               current['item_text'])
-
-        db.execute(
-            """INSERT INTO checklist_history
-               (change_description, checklist_id, user_id)
-               VALUES (?, ?, ?);""",
-            (change_history, checklist.header['id'], g.user['id'])
-        )
-        db.execute(
-            'UPDATE checklist_items SET done = ? WHERE id = ?',
-            (complete, current['id'])
-        )
-        db.commit()
-
-        # Refresh the list and return it.
-        checklist = get_checklist(id)
+        current = ChecklistItem.query.filter_by(id=item_id).first_or_404()
+        current.toggle(g.user)
+        db.session.commit()
 
         return redirect(url_for('checklist.view', id=id))
-
-    # No checklist found with that id so abort
-    abort(404)
 
 
 @bp.route('/<int:id>/add', methods=('GET', 'POST'))
@@ -256,27 +119,9 @@ def add_item(id):
     checklist = get_checklist(id)
     form = AddItemForm()
 
-    if not checklist:
-        abort(404)
-
     if form.validate_on_submit():
-        item_text = request.form['item_text']
-
-        change_history = ('{} added {} to the list.'
-                          .format(g.user['given_name'], item_text))
-
-        db = get_db()
-        db.execute(
-            """INSERT INTO checklist_items (item_text, checklist_id)
-            VALUES (?, ?)""",
-            (item_text, id,)
-        )
-        db.execute(
-            """INSERT INTO checklist_history
-               (change_description, checklist_id, user_id)
-               VALUES (?, ?, ?);""",
-            (change_history, checklist.header['id'], g.user['id'])
-        )
-        db.commit()
+        checklist.add_item(form.item_text.data, g.user)
+        db.session.add(checklist)
+        db.session.commit()
 
     return redirect(url_for('checklist.view', form=form, id=id))

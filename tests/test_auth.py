@@ -1,7 +1,6 @@
 import pytest
 
-from checklist_app.db import get_db
-from checklist_app.models.user import get_user
+from checklist_app.models import get_user, PasswordToken
 
 
 def test_get_send_password_change(client):
@@ -23,21 +22,18 @@ def test_post_send_password_change(client, username, expected):
 
 def test_forgot_password(app, client):
     with app.app_context():
-        db = get_db()
         username = 'test@bebleo.url'
-
         client.post('/auth/forgotpassword', data={"username": username})
+
         user = get_user(username)
-        row = db.execute(
-            'SELECT * FROM password_tokens WHERE user_id = ?',
-            (user['id'],)
-        ).fetchone()
-        token = row['token']
-        response = client.get(f'/auth/forgotpassword/{token}')
+        print(user.__dict__)
+        reset_token = PasswordToken.query.filter_by(user=user).first()
+        print(reset_token.__dict__)
+        response = client.get(f'/auth/forgotpassword/{reset_token.token}')
         assert b'Set New Password' in response.data
 
     response = client.post(
-        f'/auth/forgotpassword/{token}',
+        f'/auth/forgotpassword/{reset_token.token}',
         data={
             "username": "test@bebleo.url",
             "password": "password",
@@ -136,7 +132,7 @@ def test_post_login_diabled_user(client):
     account disabled page."""
     response = client.post('/auth/login',
                            data={"username": "disabled@bebleo.url",
-                                 "password": "test"})
+                                 "password": "disabled"})
     assert response.status_code == 302
     assert '/auth/disabled' in response.headers['Location']
 

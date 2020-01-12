@@ -1,20 +1,17 @@
-import logging
 from datetime import datetime, timedelta
-
 from enum import Enum
 from secrets import token_urlsafe
 
-from checklist_app.db import get_db
+from checklist_app import db
 
 __all__ = (
+    "PasswordToken",
     "TokenExpiredError",
     "TokenInvalidError",
     "TokenPurpose",
     "save_token",
     "validate_token",
 )
-
-logger = logging.getLogger(__name__)
 
 
 class TokenExpiredError(Exception):
@@ -36,6 +33,20 @@ class TokenPurpose(Enum):
         return self.value
 
 
+class PasswordToken(db.Model):
+    default_expiry = datetime.utcnow() + timedelta(hours=24)
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String, nullable=False)
+    purpose = db.Column(db.String, nullable=False,
+                        default=TokenPurpose.PASSWORD_RESET.value)
+    expires = db.Column(db.DateTime, default=default_expiry)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+                        nullable=False)
+
+    user = db.relationship('User',
+                           backref=db.backref('tokens', lazy=True))
+
+
 def save_token(user_id, token=None, purpose=TokenPurpose.PASSWORD_RESET,
                expiry=datetime.utcnow()+timedelta(hours=24)):
     """Saves a token to the database and returns it. If no token is
@@ -54,23 +65,16 @@ def save_token(user_id, token=None, purpose=TokenPurpose.PASSWORD_RESET,
     if token is None:
         token = token_urlsafe()
 
-    db = get_db()
-    db.execute(
-        """INSERT INTO password_tokens (user_id, token, token_type, expires)
-           VALUES (?, ?, ?, ?)""",
-        (user_id, token, f'{purpose}', expiry)
-    )
-    db.commit()
+    pt = PasswordToken(token=token, expires=expiry, user_id=user_id)
+    db.session.add(pt)
+    db.session.commit()
 
     return token
 
 
 def _get_token(token):
     """Retrive a password token from the database."""
-    _token = get_db().execute(
-        "SELECT * FROM password_tokens WHERE token = ?",
-        (token,)).fetchone()
-
+    _token = PasswordToken.query.filter_by(token=token).first()
     return _token
 
 
@@ -99,13 +103,13 @@ def validate_token(token, user_id=None, purpose=TokenPurpose.PASSWORD_RESET,
     if _password_token is None:
         return False
 
-    if _password_token['expires'] < datetime.utcnow() and enforce_expiry:
+    if _password_token.expires < datetime.utcnow() and enforce_expiry:
         raise TokenExpiredError()
 
-    if user_id and _password_token['user_id'] != user_id:
+    if user_id and _password_token.user_id != user_id:
         raise TokenInvalidError()
 
-    if _password_token['token_type'] != f'{purpose}':
+    if _password_token.purpose != purpose.value:
         raise TokenInvalidError()
 
     return True

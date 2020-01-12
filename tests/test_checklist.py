@@ -3,7 +3,7 @@
 
 import pytest
 
-from checklist_app.db import get_db
+from checklist_app.models import Checklist, ChecklistItem
 
 login_required = {
     "get": ['', '/', '/create', '/edit/1', '/1/check/1', '/1/add'],
@@ -19,25 +19,22 @@ def test_get_checklists(client, auth):
 
 
 def test_add_checklist(app, client, auth):
-    auth.login()
     checklist = {
         "list_title": "List no. 3",
         "list_description": "This is a list being added as a test"
     }
     with app.app_context():
+        auth.login()
         response = client.post('/checklist/create', data=checklist)
         assert response.status_code == 302
-        assert '/checklist/3' in response.headers['Location']
+        assert '/checklist/2' in response.headers['Location']
 
-        db = get_db()
-        list_ = db.execute('SELECT * FROM checklists WHERE title = ?',
-                           (checklist['list_title'],)).fetchone()
+        list_ = Checklist.query.filter_by(title=checklist['list_title']).all()
         assert list_ is not None
 
 
 def test_edit_checklist(app, client, auth):
     with app.app_context():
-        db = get_db()
         auth.login()
         list_ = {
             "list_title": "Edited List",
@@ -48,10 +45,9 @@ def test_edit_checklist(app, client, auth):
         assert response.status_code == 302
         assert '/checklist/1' in response.headers['Location']
 
-        checklist = db.execute("""SELECT * FROM checklists
-                                  WHERE id = 1;""").fetchone()
-        assert checklist['title'] == list_['list_title']
-        assert checklist['description'] == list_['list_description']
+        checklist = Checklist.query.get(1)
+        assert checklist.title == list_['list_title']
+        assert checklist.description == list_['list_description']
 
 
 def test_mark_item_done(app, client, auth):
@@ -61,28 +57,23 @@ def test_mark_item_done(app, client, auth):
         assert response.status_code == 302
         assert '/checklist/1' in response.headers['Location']
 
-        db = get_db()
-        item = db.execute("""SELECT * FROM checklist_items
-                             WHERE id = 1""").fetchone()
-        assert item['done']
+        item = ChecklistItem.query.get(1)
+        assert item.done
 
 
 def test_unmark_item_done(app, client, auth):
     with app.app_context():
         auth.login()
-        response = client.get('/checklist/2/check/4')
+        response = client.get('/checklist/1/check/3')
         assert response.status_code == 302
-        assert '/checklist/2' in response.headers['Location']
+        assert '/checklist/1' in response.headers['Location']
 
-        db = get_db()
-        item = db.execute("""SELECT * FROM checklist_items
-                             WHERE id = 4""").fetchone()
-        assert not item['done']
+        item = ChecklistItem.query.get(3)
+        assert not item.done
 
 
 def test_delete_checklist(app, client, auth):
     with app.app_context():
-        db = get_db()
         auth.login()
 
         # Get the form and make sure the message displays
@@ -98,12 +89,8 @@ def test_delete_checklist(app, client, auth):
         assert response.status_code == 302
         assert '/checklist' in response.headers['Location']
         # check that the changes have been made
-        _list = db.execute("SELECT * FROM checklists WHERE id = 1").fetchone()
-        assert _list['is_deleted']
-        history = db.execute("""SELECT * FROM checklist_history
-                                WHERE checklist_id = 1
-                                ORDER BY id DESC LIMIT 1""").fetchone()
-        assert 'deleted' in history['change_description']
+        _list = Checklist.query.get(1)
+        assert _list.is_deleted
 
 
 @pytest.mark.parametrize("path", login_required['get'])

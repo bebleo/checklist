@@ -5,9 +5,7 @@
 
 import pytest
 
-from checklist_app.admin import user_by_username
-from checklist_app.db import get_db
-from checklist_app.models.user import AccountStatus
+from checklist_app.models import AccountStatus, User, get_user
 
 login_test_paths = ['/admin/users', '/admin/users/1', '/admin/users/new']
 test_add_user_data = [
@@ -53,16 +51,16 @@ test_add_user_data = [
 ]
 
 
-def test_user_by_username(app):
+def test_get_user(app):
     with app.app_context():
-        user = user_by_username(username='test@bebleo.url')
-        assert user['id'] == 2
+        user = get_user(username='test@bebleo.url')
+        assert user.id == 2
 
-        user = user_by_username(id=2)
-        assert user['email'] == 'test@bebleo.url'
+        user = get_user(id=2)
+        assert user.email == 'test@bebleo.url'
 
         with pytest.raises(ValueError) as e:
-            user = user_by_username()
+            user = get_user()
             assert 'No username or id' in str(e.value)
 
 
@@ -87,7 +85,6 @@ def test_edit_user(app, client, auth):
     # Test that the username needs to be there
     with app.app_context():
         auth.login(username="admin@bebleo.url", password="admin")
-        db = get_db()
         data = {
             "username": "",
             "given_name": "",
@@ -95,12 +92,11 @@ def test_edit_user(app, client, auth):
         }
         response = client.post('/admin/users/3', data=data)
         assert b'Username must not be blank.' in response.data
-        user = db.execute("SELECT * FROM users WHERE id = ?", (3,)).fetchone()
-        assert user['email'] != ""
+        user = User.query.filter_by(id=3).first()
+        assert user.email != ""
 
     # Test that a user cannot remove their own admin flag
     with app.app_context():
-        db = get_db()
         data = {
             "username": "admin@bebleo.url",
             "given_name": "Admin",
@@ -109,12 +105,11 @@ def test_edit_user(app, client, auth):
         auth.login(username="admin@bebleo.url", password="admin")
         response = client.post('/admin/users/1', data=data)
         assert b'Cannot remove admin rights from your own' in response.data
-        user = db.execute("SELECT * FROM users WHERE id = ?", (1,)).fetchone()
-        assert user['is_admin']
+        user = User.query.filter_by(id=1).first()
+        assert user.is_admin
 
     # Test a succesful edit
     with app.app_context():
-        db = get_db()
         data = {
             "username": "modified@bebleo.url",
             "given_name": "Modified",
@@ -124,11 +119,10 @@ def test_edit_user(app, client, auth):
         auth.login(username="admin@bebleo.url", password="admin")
         response = client.post('/admin/users/3', data=data)
         assert b'Success' in response.data
-        user = db.execute("SELECT * FROM users WHERE id = ?", (3,)).fetchone()
-        assert user['email'] == "modified@bebleo.url"
-        assert user['given_name'] == "Modified"
-        assert user['family_name'] == "Bebleo-User"
-        assert user['is_admin']
+        user = User.query.filter_by(id=3).first()
+        assert user.email == "modified@bebleo.url"
+        assert user.full_name == "Modified Bebleo-User"
+        assert user.is_admin
 
 
 def test_get_add_user(client, auth):
@@ -140,21 +134,13 @@ def test_get_add_user(client, auth):
 @pytest.mark.parametrize("info, expected, id, is_admin", test_add_user_data)
 def test_add_user(app, client, auth, info, expected, id, is_admin):
     auth.login(username="admin@bebleo.url", password="admin")
-    print(f"{info['username']}")
     response = client.post('/admin/users/new', data=info)
     assert expected in response.data
 
     with app.app_context():
-        db = get_db()
-        print(f"Username being added is {info['username']}")
-
-        added_user = db.execute(
-            'SELECT * FROM users WHERE email = ?;',
-            (info['username'],)
-        ).fetchone()
-
-        assert added_user['id'] == id
-        assert added_user['is_admin'] == is_admin
+        user = User.query.filter_by(email=info["username"]).first()
+        assert user.id == id
+        assert user.is_admin == is_admin
 
 
 def test_add_user_mismatched_passwords(client, auth):
@@ -186,14 +172,12 @@ def test_disable_user_on_edit_success(app, client, auth):
     }
 
     with app.app_context():
-        db = get_db()
-
         auth.login(username='admin@bebleo.url', password='admin')
         response = client.post('/admin/users/2', data=info)
         assert b'Success' in response.data
 
-        record = db.execute("SELECT * FROM users WHERE id=2").fetchone()
-        assert record['deactivated'] == AccountStatus.DEACTIVATED
+        record = User.query.get(2)
+        assert record.account_status == AccountStatus.DEACTIVATED
 
 
 def test_disable_user_on_edit_not_allowed(app, client, auth):
@@ -210,15 +194,13 @@ def test_disable_user_on_edit_not_allowed(app, client, auth):
     }
 
     with app.app_context():
-        db = get_db()
-
         auth.login(username="admin@bebleo.url", password="admin")
         response = client.post('/admin/users/1', data=info)
         assert b'Cannot deactivate' in response.data
 
-        user = db.execute("SELECT * FROM users WHERE id = 1").fetchone()
-        assert not user['deactivated']
-        assert user['deactivated'] == AccountStatus.ACTIVE
+        user = User.query.get(1)
+        assert not user.deactivated
+        assert user.account_status == AccountStatus.ACTIVE
 
 
 @pytest.mark.parametrize("path", login_test_paths)

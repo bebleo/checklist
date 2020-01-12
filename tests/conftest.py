@@ -1,33 +1,45 @@
 # Configuration tests for the application
 # Copyright 2019, Licensed under MIT
 
-import os
-import tempfile
-
 import pytest
+from werkzeug.security import generate_password_hash
 
-from checklist_app import create_app
-from checklist_app.db import get_db, init_db
-
-with open(os.path.join(os.path.dirname(__file__), 'data.sql'), 'rb') as f:
-    _data_sql = f.read().decode('utf8')
+from checklist_app import create_app, db, init_db
+from checklist_app.models import AccountStatus, Checklist, User, get_user
 
 
 @pytest.fixture
 def app():
     """Define a new instance for the tests."""
-    db_fd, db_path = tempfile.mkstemp()
-    app = create_app({"TESTING": True, "DATABASE": db_path,
-                      "WTF_CSRF_ENABLED": False})
+    app = create_app({"TESTING": True, "WTF_CSRF_ENABLED": False,
+                      "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"})
 
     with app.app_context():
         init_db()
-        get_db().executescript(_data_sql)
+        db.session.add_all([
+            User(email="test@bebleo.url",
+                 password=generate_password_hash("test")),
+            User(email="other@bebleo.url",
+                 password=generate_password_hash("other")),
+            User(email="disabled@bebleo.url",
+                 account_status=AccountStatus.DEACTIVATED,
+                 password=generate_password_hash("disabled"))
+        ])
+        db.session.commit()
+
+        user = get_user(id=1)
+        checklist = Checklist(
+            title="List",
+            description="A list created for testing purposes",
+            created_by=user
+        )
+        checklist.add_item("Item 1.1", user)
+        checklist.add_item("Item 1.2", user)
+        checklist.add_item("Item 1.3", user, done=True)
+        db.session.add(checklist)
+        db.session.commit()
 
     yield app
-
-    os.close(db_fd)
-    os.unlink(db_path)
 
 
 @pytest.fixture
