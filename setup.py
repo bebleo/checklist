@@ -9,7 +9,7 @@ with io.open('README.md', "rt", encoding="utf8") as f:
     readme = f.read()
 
 setup(
-    name="checklist_app",
+    name="checklist",
     version="0.0.1",
     url="https://bebleo.github.io/checklist",
     license="MIT",
