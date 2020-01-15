@@ -1,0 +1,275 @@
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+body {
+    background-color: aliceblue;
+    font-family: Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+table {
+    width: 100%;
+    background-color: white;
+    border-collapse: collapse;
+}
+th {
+    text-align: left;
+    border: 1px solid darkslategray;
+    padding: 0.5em;
+}
+th:last-of-type {
+    text-align: right;
+}
+td {
+    border: 1px solid darkslategray;
+    padding: 0.5em;
+}
+td:last-of-type {
+    text-align: right;
+}
+.no-sidebar {
+    display: block !important;
+}
+div.container {
+    text-align: auto;
+    max-width: 1000px;
+    padding: 8px;
+    clear: both;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+}
+h1 {
+    color: darkorange;
+    display: inline;
+}
+html {
+    position: relative;
+    min-height: 100%;
+}
+.inline-form {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 0.2em;
+}
+label {
+    /* width: 100px;
+    display: inline-block; */
+    clear: right;
+    display: block;
+}
+.inline-form label {
+    clear: none;
+    display: initial;
+}
+.inline-form input[type=text] {
+    flex: 1;
+    margin-right: 0.5em;
+    margin-left: 0.5em;
+}
+.beta::after {
+    content: " beta";
+    color: red;
+    vertical-align: super;
+    font-size: 50%;
+}
+.deck {
+    text-align: left;
+}
+.card {
+    background-color: white;
+    padding: 0.5em;
+    display: inline-block;
+    clear: none;
+    width: 30%;
+    margin-bottom: 1rem;
+    margin-right: 0.6rem;
+    min-width: 200px;
+    border: 1px solid darkgray;    
+    vertical-align: top;
+}
+.card:first {
+    clear: left;
+}
+.card:last-of-type {
+    clear: right;
+}
+.card > h3 {
+    margin-top: 0;
+}
+.card-list {
+    line-height: 1.5;
+    padding-left: 20px;
+}
+.footer {
+    color: gray;
+    max-width: 1000px;
+    margin: 2em auto;
+}
+.bebleo {
+    color: darkorange;
+    font-weight: bold;
+}
+.footer::after {
+    display: block;
+    clear: both;
+    height: 0px;
+    overflow: hidden;
+    content: none;
+}
+.header {
+    background-color: darkblue;
+    max-width: 1000px;
+    padding: 8px;
+    clear: both;
+    text-align: center;
+    vertical-align: bottom;
+    justify-content: space-between;
+    display: flex;
+    align-items: flex-end;
+    margin: 0 auto;
+}
+.header > h1 {
+    margin: 0;
+    clear: left;
+    display: inline-block;
+}
+.notice {
+    border: 1px solid darkslateblue;
+    background-color: aliceblue;
+    border-radius: 3px;
+    padding: 0.5em;
+    margin-top: 24px;
+}
+.logo {
+    width: 50%;
+    min-width:300px;
+    text-align: left;
+}
+.nav-links {
+    width: 50%;
+    min-width: 300px;
+    text-align: right;
+    flex: 1;
+}
+nav {
+    text-align: right;
+    display: inline;
+}
+nav::after {
+    display: block;
+    clear: both;
+    height: 10px;
+    content: " ";
+    width: 100%;
+}
+nav > a {
+    color: white;
+    margin: 0.5em;
+}
+nav > li {
+    display: inline-block;
+    margin-left: 2em;
+    color: white;
+}
+.sidebar {
+    max-width: 250px;
+    width: 33%;
+    margin-right: 2em;
+    padding-top: 3em;
+}
+.content {
+    background-color: white;
+    border: 1px solid grey;
+    padding:  0 24px 24px 24px;
+    flex: 1;
+    min-width: 300px;
+}
+.content-list {
+    padding: 0 0 24px;
+    flex: 1;
+    min-width: 300px;
+}
+.messages {
+    background-color: cornsilk;
+    border: 1px solid goldenrod;
+    padding: 0.5em;
+    clear: right;
+    flex: 1;
+    margin-top: 24px;
+}
+.subtitle {
+    font-size: 80%;
+    color: lightgrey;
+    text-transform: uppercase;
+}
+.taglist {
+    padding-left: 0;
+}
+.taglist > li {
+    display: inline-block;
+    border: 1px solid skyblue;
+    border-radius: 3px;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.1em;
+    margin-bottom: 0.25em;
+    font-size: small;
+    background-color: rgb(217, 240, 255);
+}
+.page-form {
+    margin: 0 auto;
+    max-width: 400px;
+    background-color: white;
+    border: 1px solid grey;
+    padding:  0 24px 24px 24px;
+    margin-top: 24px;
+}
+label {
+    padding: 0.25em 0;
+}
+.width-50 input[type=email], 
+.width-50 input[type=password] {
+    width: 50%; /* !important;*/
+}
+input[type=email], 
+input[type=text], 
+input[type=password], 
+textarea {
+    width: 100%;
+    padding: 5px 2px;
+    box-sizing: border-box;
+}
+input {
+    font-size: inherit;
+}
+textarea {
+    font-size: 16px;
+}
+.btn-primary {
+    background-color: #007bff;
+    border: 1px solid steelblue;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.btn-secondary {
+    background-color: white;
+    border: 1px solid steelblue;
+    color: steelblue;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.progressbar {
+    width: 50px;
+    border: thin solid lightgrey;
+    display: inline-block;
+    text-align: left;
+    margin-left: 0.5em;
+}
+.progress {
+    background-color: green;
+}

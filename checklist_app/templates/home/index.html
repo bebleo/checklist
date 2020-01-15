@@ -1,0 +1,13 @@
+{% extends 'base_page.html' %}
+
+{% block content %}
+    <div>
+        <h2>Getting Started with Checklist</h2>
+        <p>Checklist is a very basic solution that allows you to track a list of things. The process is simple:</p>
+        <ol>
+            <li><a href="{{ url_for('auth.register') }}">Register</a> for an account.</li>
+            <li><a href="{{ url_for('checklist.create') }}">Create</a> a new list.</li>
+            <li><a href="{{ url_for('checklist.index') }}">Track </a></li>
+        </ol>
+    </div>
+{% endblock %}

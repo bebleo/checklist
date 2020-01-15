@@ -1,0 +1,71 @@
+{% extends 'base_form.html' %}
+{% from 'macros.html' import success_message %}
+{% from 'macros.html' import error_messages %}
+
+{% block title %}{{ user['given_name'] }} {{ user['family_name'] }} - ({{ user['email'] }}){% endblock %}
+
+{% block sidebar %}
+    <div class="sidebar">
+        <strong>Tasks</strong>
+        <hr>
+        &nbsp;<br>
+        <strong>List</strong>
+        <hr>
+        <a href="{{ url_for('checklist.index') }}">All lists</a><br>
+        <a href="{{ url_for('checklist.create') }}">Create new list</a><br>
+        &nbsp;<br>
+        <strong>Settings</strong>
+        <hr>
+        <a href="{{ url_for('admin.edit_user', id=g.user['id']) }}">User</a><br>
+    </div>
+{% endblock sidebar %}
+
+{% block content %}
+    {% if form.errors %}
+    {{ error_messages(form.errors) }}
+    {% endif %}
+    <form action="" method="post">
+        {{ form.csrf_token }}
+        <h2>Edit User</h2>
+        <div class="width-50">
+        <label for="username">Username: </label>
+        <input type="email" name="username" id="username" value="{{ user['email'] }}"><br>
+        </div>
+        <label for="given_name">Given name: </label>
+        <input type="text" name="given_name" id="given_name" value="{{ user['given_name'] }}"><br>
+        <label for="family_name">Family name: </label>
+        <input type="text" name="family_name" id="family_name" value="{{ user['family_name'] }}"><br>
+        {% if g.user['is_admin'] %}
+        &nbsp;<br>
+        <input type="checkbox" name="is_admin" id="is_admin" {% if user['is_admin'] %}checked{% endif %}>Administrator<br>
+        &nbsp;<br>
+        <fieldset>
+            <legend>Account Flags</legend> 
+            <!-- <input type="checkbox" name="account_flag" id="account_disabled" onclick="CheckboxGroup(this)" value="1" {% if user['deactivated'] == 1 %}checked{% endif %}>Deactivate account<br>
+            <input type="checkbox" name="account_flag" id="account_change_password" onclick="CheckboxGroup(this)" value="2" {% if user['deactivated'] == 2 %}checked{% endif %} disabled>Require password reset on next login<br>
+            <input type="checkbox" name="account_flag" id="account_verification_reqd" onclick="CheckboxGroup(this)" value="3" {% if user['deactivated'] == 3 %}checked{% endif %} disabled>Account verification required<br> -->
+            {{ form.account_flag() }}
+        </fieldset>
+        {% endif %}
+        &nbsp;<br>
+        <input type="submit" class="btn-primary" value="Save">
+        <input type="reset" class="btn-secondary" value="Cancel"><br>
+    </form>
+    <script>
+        var deactivated = [{{ deactivated }}];
+
+        window.onload = () => {
+            document.getElementsByName("account_flag").forEach((item) => {
+                item.onclick = function() { CheckboxGroup(item) };
+                item.checked = deactivated.includes(parseInt(item.value));
+            })
+        }
+
+        function CheckboxGroup(checkbox) {
+            group = document.getElementsByName(checkbox.name);
+            group.forEach((item) => {
+                if (item !== checkbox) { item.checked = false; }
+            })
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{# Macros for common use in the application #}
+
+{% macro success_message(msg, show=False) %}
+{% if show %}
+    <div class="notice">
+        {{ msg }}
+    </div>
+{% endif %}
+{% endmacro %}
+
+{% macro error_messages(errors) %}
+<div class="messages">
+    {% for e in errors.values() %}
+    {{ '<br>'.join(e)|safe }}
+    {% endfor %}
+</div>
+{% endmacro %}

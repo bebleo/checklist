@@ -1,0 +1,30 @@
+{% extends 'base_list.html' %}
+
+{% block title %}Lists{% endblock %}
+
+{% block content %}
+        <div>
+            <h2>Checklists</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Complete</th>
+                    </tr>
+                </thead>
+                <tbody>
+    {% for list in lists %}
+    {% set per_complete = '{:.0%}'.format(list.percent_complete) %}
+                    <tr>
+                        <td><a href="{{ url_for('checklist.view', id=list.id) }}">{{ list.title }}</a></td>
+                        <td>{{ list.created.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ per_complete }}<div class="progressbar">
+                            <div class="progress" style="width: {{ per_complete }}">&nbsp;</div>
+                        </div></td>
+                    </tr>
+    {% endfor %}            
+                </tbody>
+            </table>
+        </div>
+{% endblock %}

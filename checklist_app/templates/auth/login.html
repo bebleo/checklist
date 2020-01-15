@@ -1,0 +1,32 @@
+{% extends 'base_page.html' %}
+
+{% block content %}
+    <div class="page-form">
+        {% if form.errors %}
+        <div class="messages">
+            {% for e in form.errors.values() %}
+            {{ '<br>'.join(e)|safe }}
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form action="{{ url_for('auth.login') }}" method="post">
+            {{ form.csrf_token }}
+            <h2>Login</h2>
+            <label for="username">Email: </label>
+            <input type="email" name="username" id="username" placeholder="email" required><br>
+            <label for="password">Password: </label>
+            <input type="password" name="password" id="password" placeholder="password" required><br>
+            &nbsp;<br>
+            <input type="checkbox" name="remember" id="remember">Remember login</input><br>
+            <!-- <label for="remember">Remember login?</label> -->
+            &nbsp;<br>
+            <input type="submit" value="Login" class="btn-primary">
+        </form>
+        <p><a href="{{ url_for('auth.send_password_change') }}">Forgot Password</a> or <a href="{{ url_for('auth.register') }}">Register</a></p>
+    </div>
+    <script>
+        window.onload = ((e) => {
+            document.getElementById('username').focus()
+        });
+    </script>
+{% endblock %}
