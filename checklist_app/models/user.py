@@ -4,7 +4,7 @@
 from datetime import datetime
 from enum import IntEnum
 
-from flask import current_app
+from flask import current_app, abort
 
 from checklist_app import db
 
@@ -12,6 +12,7 @@ __all__ = (
     "AccountStatus",
     "User",
     "get_user",
+    "get_user_or_404"
 )
 
 
@@ -62,5 +63,13 @@ def get_user(username=None, id=None):
     else:
         current_app.logger.error('No argument supplied to fetch user from db.')
         raise ValueError("No username or id supplied to get user.")
+
+    return user
+
+
+def get_user_or_404(username=None, id=None):
+    user = get_user(username, id)
+    if user is None:
+        abort(404)
 
     return user

@@ -11,7 +11,7 @@ from werkzeug.security import generate_password_hash
 from checklist_app import db
 from checklist_app.auth import admin_required, login_required
 from checklist_app.forms import AddUserForm, EditUserForm
-from checklist_app.models import AccountStatus, User, get_user
+from checklist_app.models import AccountStatus, User, get_user, get_user_or_404
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -51,7 +51,7 @@ def list_users():
 def edit_user(id: int):
     """Edit the user with the id."""
     form = EditUserForm()
-    user = get_user(id=id)
+    user = get_user_or_404(id=id)
     saved = False
 
     # If the user isn't an admin check that user id matches the logged in user.
@@ -59,10 +59,6 @@ def edit_user(id: int):
     if not g.user.is_admin:
         if id != g.user.id:
             abort(401)
-
-    if not user:
-        # ID doesn't exist in the database so return 404-Page Not Found.
-        abort(404)
 
     deactivated = 0
 
