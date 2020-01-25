@@ -4,7 +4,7 @@
 import pytest
 from werkzeug.security import generate_password_hash
 
-from checklist_app import create_app, db, init_db
+from checklist_app import create_app, db, init_db, mail
 from checklist_app.models import AccountStatus, Checklist, User, get_user
 
 
@@ -39,6 +39,8 @@ def app():
         db.session.add(checklist)
         db.session.commit()
 
+        app.mail = mail
+
     yield app
 
 
@@ -52,6 +54,12 @@ def client(app):
 def runner(app):
     """Returns a runner for the tests."""
     return app.test_cli_runner()
+
+
+@pytest.fixture
+def outbox(app):
+    with app.mail.record_messages() as _outbox:
+        yield _outbox
 
 
 class AuthActions(object):
