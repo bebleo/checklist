@@ -9,18 +9,20 @@ def test_get_send_password_change(client):
 
 
 @pytest.mark.parametrize(
-    "username, expected",
+    "username, expected, msgcount",
     [
-        ("false@bebleo.url", b"No user found"),
-        ("admin@bebleo.url", b"Password Sent")
+        ("false@bebleo.url", b"No user found", 0),
+        ("admin@bebleo.url", b"Password Sent", 1)
     ]
 )
-def test_post_send_password_change(client, username, expected):
+def test_post_send_password_change(client, outbox, username, expected,
+                                   msgcount):
     response = client.post('/auth/forgotpassword', data={"username": username})
     assert expected in response.data
+    assert len(outbox) == msgcount
 
 
-def test_forgot_password(app, client):
+def test_forgot_password(app, outbox, client):
     with app.app_context():
         username = 'test@bebleo.url'
         client.post('/auth/forgotpassword', data={"username": username})
@@ -31,6 +33,8 @@ def test_forgot_password(app, client):
         print(reset_token.__dict__)
         response = client.get(f'/auth/forgotpassword/{reset_token.token}')
         assert b'Set New Password' in response.data
+        assert len(outbox) > 0
+        assert reset_token.token in outbox[0].body
 
     response = client.post(
         f'/auth/forgotpassword/{reset_token.token}',
