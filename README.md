@@ -10,6 +10,7 @@ It's also an opportunity to work in python and to experiment with:
 
 - Flask
 - Flask-Mail
+- Flask-SQLAlchemy
 - Flask-WTF
 
 Users may notice that a lot of the material in the site derives heavily from the Flask tutorial. This is freely and gratefully acknowledged.
