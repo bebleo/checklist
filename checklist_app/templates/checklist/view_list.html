@@ -22,12 +22,6 @@
 {% endblock %}
 
 {% block content %}
-        <script>
-            // Redirects when the checkbox is clicked.
-            function redirect(url) {
-                window.location.href = url;
-            }
-        </script>
         <h2>{{ checklist.title }}</h2>
     {% if checklist.description %}
         <p>{{ checklist.description }}</p>
@@ -36,7 +30,7 @@
     {% for item in checklist.items %}
         {% set redirect_url = url_for('checklist.toggle_item', id=checklist.id, item_id=item.id) %}
         <div id="list_items">
-            <input type="checkbox" onchange="redirect('{{ redirect_url }}');" {% if item.done %}checked{% endif %}> {{ item.text }}
+            <input type="checkbox" class="toggle-item" value="{{ redirect_url }}" {% if item.done %}checked{% endif %}> {{ item.text }}
         </div>
     {% endfor %}
         <!-- Form to add an item -->
@@ -55,4 +49,5 @@
             {% endfor %}
             </ol>
         </div>
+        <script src="{{ url_for('static', filename='scripts.js') }}" nonce="{{ csp_nonce }}"></script>
 {% endblock %}

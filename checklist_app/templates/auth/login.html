@@ -24,7 +24,7 @@
         </form>
         <p><a href="{{ url_for('auth.send_password_change') }}">Forgot Password</a> or <a href="{{ url_for('auth.register') }}">Register</a></p>
     </div>
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         window.onload = ((e) => {
             document.getElementById('username').focus()
         });
