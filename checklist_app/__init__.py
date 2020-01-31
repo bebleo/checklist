@@ -14,6 +14,7 @@ from flask import Flask
 from flask.cli import with_appcontext
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
+from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash
 
@@ -21,6 +22,12 @@ csrf = CSRFProtect()
 db = SQLAlchemy()
 mail = Mail()
 log = logging.getLogger(__name__)
+talisman = Talisman()
+
+csp = {
+    'default-src': '\'self\'',
+    'script-src': '\'self\'',
+}
 
 
 def create_app(test_config=None):
@@ -55,7 +62,8 @@ def create_app(test_config=None):
     # Create the Instance directory if not already there.
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Wireup the database and csrf
+    talisman.init_app(app, content_security_policy=csp,
+                      content_security_policy_nonce_in=['script-src'])
     db.init_app(app)
     csrf.init_app(app)
     mail.init_app(app)

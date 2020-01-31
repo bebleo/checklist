@@ -51,7 +51,7 @@
         <input type="submit" class="btn-primary" value="Save">
         <input type="reset" class="btn-secondary" value="Cancel"><br>
     </form>
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         var deactivated = [{{ deactivated }}];
 
         window.onload = () => {

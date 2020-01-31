@@ -1,10 +1,15 @@
-# checklist
+# bebleo: Checklist
 
-Checklist should be considered a proof-of-concept for a solution that allows users to create, update, and delete lists and to track the changes that are made. As such the aim is not to produce a production-ready site. If you're looking for one, I suggest searching for something else.
+Checklist is a proof-of-concept for a solution that allows users to create, update, and delete lists and to track the changes that are made. It is not a production-ready site. If you're looking for one, I suggest searching for something else.
+
+Branch | Build
+-------|------
+master | [![Build Status](https://travis-ci.com/bebleo/checklist.svg?branch=master)](https://travis-ci.com/bebleo/checklist)
+dev | [![Build Status](https://travis-ci.com/bebleo/checklist.svg?branch=dev)](https://travis-ci.com/bebleo/checklist)
 
 ## Introduction
 
-The making of checklist has been primarily motivate by a desire to produce a todo list solution that extends beyond the normal to-do list and the design considerations that come in to play.
+The making of checklist has been primarily motivated by a desire to produce a todo list solution that extends beyond the normal to-do list and the design considerations that come in to play.
 
 It's also an opportunity to work in python and to experiment with:
 
@@ -13,7 +18,7 @@ It's also an opportunity to work in python and to experiment with:
 - Flask-SQLAlchemy
 - Flask-WTF
 
-Users may notice that a lot of the material in the site derives heavily from the Flask tutorial. This is freely and gratefully acknowledged.
+Users may notice that a lot of the material in the site derives heavily from the Flask tutorial and the quickstarts for the above projects. This is freely and gratefully acknowledged.
 
 ### Running the Sample
 
@@ -49,4 +54,4 @@ This project isn't currently seeking any contributors.
 
 -----
 
-Copyright 2019. Written with :heart: and :coffee: in Montréal, QC
+Copyright 2019-2020. Written with ❤ and ☕ in Montréal, QC
