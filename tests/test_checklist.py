@@ -72,6 +72,17 @@ def test_unmark_item_done(app, client, auth):
         assert not item.done
 
 
+def test_mark_all_items_done(app, client, auth):
+    with app.app_context():
+        auth.login()
+        response = client.get('/checklist/1/check/all')
+        assert response.status_code == 302
+        assert '/checklist/1' in response.headers['Location']
+
+        for item in Checklist.query.get(1).items:
+            assert item.done
+
+
 def test_delete_checklist(app, client, auth):
     with app.app_context():
         auth.login()

@@ -6,7 +6,7 @@
     <div class="sidebar">
         <strong>Tasks</strong>
         <hr>
-        <a href="/">Mark complete</a><br>
+        <a href="{{ url_for('checklist.toggle_all', id=checklist.id) }}">Mark complete</a><br>
         <a href="{{ url_for('checklist.edit', id=checklist.id) }}">Edit</a><br>
         <a href="{{ url_for('checklist.delete', id=checklist.id )}}">Delete</a><br>
         &nbsp;<br>
