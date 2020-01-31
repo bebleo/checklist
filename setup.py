@@ -24,7 +24,8 @@ setup(
         "Flask",
         "flask-mail",
         "flask-wtf",
-        "flask-sqlalchemy"
+        "flask-sqlalchemy",
+        "flask-talisman"
     ],
     extras_require={"test": ["pytest", "coverage"]},
 )
