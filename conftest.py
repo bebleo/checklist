@@ -27,7 +27,7 @@ def app():
         ])
         db.session.commit()
 
-        user = get_user(id=1)
+        user = get_user(username="test@bebleo.url")
         checklist = Checklist(
             title="List",
             description="A list created for testing purposes",
@@ -37,6 +37,14 @@ def app():
         checklist.add_item("Item 1.2", user)
         checklist.add_item("Item 1.3", user, done=True)
         db.session.add(checklist)
+
+        empty_list = Checklist(
+            title="Empty List",
+            description="A list with no items",
+            created_by=user
+        )
+        db.session.add(empty_list)
+        
         db.session.commit()
 
         app.mail = mail

@@ -11,11 +11,14 @@ login_required = {
 }
 
 
-def test_get_checklists(client, auth):
-    auth.login()
-    response = client.get('/checklist')
-    assert response.status_code == 200
-    assert b'Checklists' in response.data
+def test_get_checklists(app, client, auth):
+    with app.app_context():
+        auth.login()
+        response = client.get('/checklist')
+        assert response.status_code == 200
+        assert b'Checklists' in response.data
+        assert b'Empty List' in response.data
+        assert b'0%' in response.data
 
 
 def test_add_checklist(app, client, auth):
@@ -27,7 +30,7 @@ def test_add_checklist(app, client, auth):
         auth.login()
         response = client.post('/checklist/create', data=checklist)
         assert response.status_code == 302
-        assert '/checklist/2' in response.headers['Location']
+        assert '/checklist/3' in response.headers['Location']
 
         list_ = Checklist.query.filter_by(title=checklist['list_title']).all()
         assert list_ is not None
