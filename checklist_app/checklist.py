@@ -96,7 +96,8 @@ def index():
 @login_required
 def view(id):
     checklist = get_checklist(id)
-    return render_template('checklist/view_list.html', checklist=checklist)
+    form = AddItemForm()
+    return render_template('checklist/view_list.html', checklist=checklist, form=form)
 
 
 @bp.route('/<int:id>/check/<int:item_id>')
@@ -133,5 +134,6 @@ def add_item(id):
         checklist.add_item(form.item_text.data, g.user)
         db.session.add(checklist)
         db.session.commit()
+        return redirect(url_for('checklist.view', form=form, id=id))
 
-    return redirect(url_for('checklist.view', form=form, id=id))
+    return render_template('checklist/view_list.html', checklist=checklist, form=form)

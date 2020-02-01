@@ -44,7 +44,7 @@ def app():
             created_by=user
         )
         db.session.add(empty_list)
-        
+
         db.session.commit()
 
         app.mail = mail
@@ -89,5 +89,4 @@ class AuthActions(object):
 
 @pytest.fixture
 def auth(client):
-    print("auth called")
     return AuthActions(client)

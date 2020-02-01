@@ -53,6 +53,18 @@ def test_edit_checklist(app, client, auth):
         assert checklist.description == list_['list_description']
 
 
+def test_add_item(app, client, auth):
+    with app.app_context():
+        auth.login()
+        text = {"item_text": "Added item"}
+        response = client.post('/checklist/1/add', data=text, follow_redirects=True)
+        assert b'Added item' in response.data
+
+        text = {"item_text": ""}
+        response = client.post('/checklist/1/add', data=text, follow_redirects=True)
+        assert b'Text for item required' in response.data
+
+
 def test_mark_item_done(app, client, auth):
     with app.app_context():
         auth.login()

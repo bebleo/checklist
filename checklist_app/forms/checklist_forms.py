@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField
-from wtforms.validators import InputRequired
+from wtforms.validators import InputRequired, Length
 
 
 class CreateListForm(FlaskForm):
@@ -17,4 +17,8 @@ class EditListForm(CreateListForm):
 
 
 class AddItemForm(FlaskForm):
-    item_text = StringField("Item Text", _name="item_text", default="")
+    item_text = StringField(
+        "item_text",
+        validators=[InputRequired("Text for item required.")],
+        default=""
+    )

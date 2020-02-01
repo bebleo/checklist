@@ -1,4 +1,5 @@
 {% extends 'base_form.html' %}
+{% from 'macros.html' import error_messages %}
 
 {% block title %}{{ checklist.title }}{% endblock %}
 
@@ -22,6 +23,9 @@
 {% endblock %}
 
 {% block content %}
+    {% if form.errors %}
+        {{ error_messages(form.errors) }}
+    {% endif %}
         <h2>{{ checklist.title }}</h2>
     {% if checklist.description %}
         <p>{{ checklist.description }}</p>
