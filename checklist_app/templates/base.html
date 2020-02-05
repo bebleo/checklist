@@ -8,6 +8,7 @@
     {% block meta %}{% endblock %} {# Additional meta directives can be added on a per page basis here #}
     <title>{% block title %}Untitled{% endblock %} | bebleo: Checklist</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block additional_styles %}{% endblock %} 
 </head>
 <body>
 {% block header %}
