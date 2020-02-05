@@ -1,4 +1,5 @@
 {% extends 'base_form.html' %}
+{% from 'macros.html' import error_messages %}
 
 {% block title %}{{ checklist.title }}{% endblock %}
 
@@ -6,7 +7,7 @@
     <div class="sidebar">
         <strong>Tasks</strong>
         <hr>
-        <a href="/">Mark complete</a><br>
+        <a href="{{ url_for('checklist.toggle_all', id=checklist.id) }}">Mark complete</a><br>
         <a href="{{ url_for('checklist.edit', id=checklist.id) }}">Edit</a><br>
         <a href="{{ url_for('checklist.delete', id=checklist.id )}}">Delete</a><br>
         &nbsp;<br>
@@ -22,6 +23,9 @@
 {% endblock %}
 
 {% block content %}
+    {% if form.errors %}
+        {{ error_messages(form.errors) }}
+    {% endif %}
         <h2>{{ checklist.title }}</h2>
     {% if checklist.description %}
         <p>{{ checklist.description }}</p>

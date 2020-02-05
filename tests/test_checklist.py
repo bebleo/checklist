@@ -11,11 +11,14 @@ login_required = {
 }
 
 
-def test_get_checklists(client, auth):
-    auth.login()
-    response = client.get('/checklist')
-    assert response.status_code == 200
-    assert b'Checklists' in response.data
+def test_get_checklists(app, client, auth):
+    with app.app_context():
+        auth.login()
+        response = client.get('/checklist')
+        assert response.status_code == 200
+        assert b'Checklists' in response.data
+        assert b'Empty List' in response.data
+        assert b'0%' in response.data
 
 
 def test_add_checklist(app, client, auth):
@@ -27,7 +30,7 @@ def test_add_checklist(app, client, auth):
         auth.login()
         response = client.post('/checklist/create', data=checklist)
         assert response.status_code == 302
-        assert '/checklist/2' in response.headers['Location']
+        assert '/checklist/3' in response.headers['Location']
 
         list_ = Checklist.query.filter_by(title=checklist['list_title']).all()
         assert list_ is not None
@@ -50,6 +53,18 @@ def test_edit_checklist(app, client, auth):
         assert checklist.description == list_['list_description']
 
 
+def test_add_item(app, client, auth):
+    with app.app_context():
+        auth.login()
+        text = {"item_text": "Added item"}
+        response = client.post('/checklist/1/add', data=text, follow_redirects=True)
+        assert b'Added item' in response.data
+
+        text = {"item_text": ""}
+        response = client.post('/checklist/1/add', data=text, follow_redirects=True)
+        assert b'Text for item required' in response.data
+
+
 def test_mark_item_done(app, client, auth):
     with app.app_context():
         auth.login()
@@ -70,6 +85,17 @@ def test_unmark_item_done(app, client, auth):
 
         item = ChecklistItem.query.get(3)
         assert not item.done
+
+
+def test_mark_all_items_done(app, client, auth):
+    with app.app_context():
+        auth.login()
+        response = client.get('/checklist/1/check/all')
+        assert response.status_code == 302
+        assert '/checklist/1' in response.headers['Location']
+
+        for item in Checklist.query.get(1).items:
+            assert item.done
 
 
 def test_delete_checklist(app, client, auth):

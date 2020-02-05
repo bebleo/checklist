@@ -17,4 +17,8 @@ class EditListForm(CreateListForm):
 
 
 class AddItemForm(FlaskForm):
-    item_text = StringField("Item Text", _name="item_text", default="")
+    item_text = StringField(
+        "item_text",
+        validators=[InputRequired("Text for item required.")],
+        default=""
+    )

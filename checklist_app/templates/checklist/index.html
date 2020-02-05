@@ -2,6 +2,10 @@
 
 {% block title %}Lists{% endblock %}
 
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='widths.css') }}">
+{% endblock %} 
+
 {% block content %}
         <div>
             <h2>Checklists</h2>
@@ -15,12 +19,12 @@
                 </thead>
                 <tbody>
     {% for list in lists %}
-    {% set per_complete = '{:.0%}'.format(list.percent_complete) %}
+    {% set per_complete = '{:.0f}'.format(list.percent_complete*100) %}
                     <tr>
                         <td><a href="{{ url_for('checklist.view', id=list.id) }}">{{ list.title }}</a></td>
                         <td>{{ list.created.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ per_complete }}<div class="progressbar">
-                            <div class="progress" style="width: {{ per_complete }}">&nbsp;</div>
+                        <td>{{ per_complete }}%<div class="progressbar">
+                            <div class="progress w-{{ per_complete }}">&nbsp;</div>
                         </div></td>
                     </tr>
     {% endfor %}            

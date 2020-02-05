@@ -96,21 +96,32 @@ def index():
 @login_required
 def view(id):
     checklist = get_checklist(id)
-    return render_template('checklist/view_list.html', checklist=checklist)
+    form = AddItemForm()
+    return render_template('checklist/view_list.html', checklist=checklist, form=form)
 
 
 @bp.route('/<int:id>/check/<int:item_id>')
 @login_required
 def toggle_item(id, item_id):
-    checklist = get_checklist(id)
+    get_checklist(id)
+    item = ChecklistItem.query.filter_by(id=item_id).first_or_404()
 
-    if checklist:
-        # Get the current state...
-        current = ChecklistItem.query.filter_by(id=item_id).first_or_404()
-        current.toggle(g.user)
+    if item.checklist_id == id:
+        item.toggle(g.user)
         db.session.commit()
 
-        return redirect(url_for('checklist.view', id=id))
+    return redirect(url_for('checklist.view', id=id))
+
+
+@bp.route('/<int:id>/check/all')
+@login_required
+def toggle_all(id):
+    checklist = get_checklist(id)
+
+    [i.toggle(g.user) for i in checklist.items if i.done is False]
+    db.session.commit()
+
+    return redirect(url_for('checklist.view', id=id))
 
 
 @bp.route('/<int:id>/add', methods=('GET', 'POST'))
@@ -123,5 +134,6 @@ def add_item(id):
         checklist.add_item(form.item_text.data, g.user)
         db.session.add(checklist)
         db.session.commit()
+        return redirect(url_for('checklist.view', form=form, id=id))
 
-    return redirect(url_for('checklist.view', form=form, id=id))
+    return render_template('checklist/view_list.html', checklist=checklist, form=form)
