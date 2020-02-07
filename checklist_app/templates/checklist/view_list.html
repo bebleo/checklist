@@ -39,7 +39,7 @@
     {% endfor %}
         <!-- Form to add an item -->
         <!-- <h3>Add an item:</h3> -->
-        <form class="inline-form width-50" action="{{ url_for('checklist.add_item', id=checklist.id) }}" method="post">
+        <form class="inline-form w-50" action="{{ url_for('checklist.add_item', id=checklist.id) }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="checkbox" disabled>
             <input type="text" name="item_text" id="item_text" placeholder="Enter a new item to be added to the list." required>
