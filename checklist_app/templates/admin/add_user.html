@@ -33,9 +33,9 @@
     <form action="" method="post">
         {{ form.csrf_token }}
         <h2>Add User</h2>
-        <div class="width-50">
+        <div class="w-50">
             <label for="username">Username: </label>
-            <input type="email" name="username" id="username" class="width-50" value="{{ form.username.data }}">
+            <input type="email" name="username" id="username" class="w-50" value="{{ form.username.data }}">
         </div>
         &nbsp;<br>
         <label for="given_name">Given name: </label>
@@ -43,11 +43,11 @@
         <label for="family_name">Family name: </label>
         <input type="text" name="family_name" id="family_name" value="{{ form.family_name.data }}"><br>
         &nbsp;<br>
-        <div class="width-50">
+        <div class="w-50">
             <label for="password">password: </label>
             <input type="password" name="password" id="password" required>
         </div>
-        <div class="width-50">
+        <div class="w-50">
             <label for="confirm">confirm password: </label>
             <input type="password" name="confirm" id="confirm" required>
         </div>

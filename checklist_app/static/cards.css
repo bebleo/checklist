@@ -1,0 +1,28 @@
+.deck {
+    text-align: left;
+}
+.card {
+    background-color: white;
+    padding: 0.5em;
+    display: inline-block;
+    clear: none;
+    width: 30%;
+    margin-bottom: 1rem;
+    margin-right: 0.6rem;
+    min-width: 200px;
+    border: 1px solid darkgray;    
+    vertical-align: top;
+}
+.card:first {
+    clear: left;
+}
+.card:last-of-type {
+    clear: right;
+}
+.card > h3 {
+    margin-top: 0;
+}
+.card-list {
+    line-height: 1.5;
+    padding-left: 20px;
+}
