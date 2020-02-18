@@ -26,7 +26,10 @@ talisman = Talisman()
 
 _content_security_policy = {
     'default-src': '\'self\'',
-    'script-src': '\'self\'',
+    'script-src': [
+        '\'self\'',
+        'ajax.googleapis.com'
+    ],
 }
 
 
