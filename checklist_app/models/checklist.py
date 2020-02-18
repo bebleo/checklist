@@ -40,7 +40,7 @@ class Checklist(db.Model):
     def record_change(self, description, user):
         _desc = f"{user.full_name} {description}"
         record = ChecklistHistory(description=_desc, checklist=self,
-                                  user=user)
+                                  user=user, created=datetime.utcnow())
         self.history.append(record)
 
     def add_item(self, text, user, done=False):
@@ -62,7 +62,7 @@ class ChecklistItem(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     checklist_id = db.Column(db.Integer, db.ForeignKey('checklist.id'),
                              nullable=False)
-    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
 
     checklist = db.relationship('Checklist',
                                 backref=db.backref('items', lazy=False))
