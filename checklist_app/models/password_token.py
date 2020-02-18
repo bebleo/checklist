@@ -109,7 +109,7 @@ def validate_token(token, user_id=None, purpose=TokenPurpose.PASSWORD_RESET,
     if user_id and _password_token.user_id != user_id:
         raise TokenInvalidError()
 
-    if _password_token.purpose != purpose.value:
-        raise TokenInvalidError()
+    # if _password_token.purpose != purpose.value:
+    #     raise TokenInvalidError()
 
     return True

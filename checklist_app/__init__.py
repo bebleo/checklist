@@ -24,9 +24,12 @@ mail = Mail()
 log = logging.getLogger(__name__)
 talisman = Talisman()
 
-csp = {
+_content_security_policy = {
     'default-src': '\'self\'',
-    'script-src': '\'self\'',
+    'script-src': [
+        '\'self\'',
+        'ajax.googleapis.com'
+    ],
 }
 
 
@@ -62,7 +65,7 @@ def create_app(test_config=None):
     # Create the Instance directory if not already there.
     os.makedirs(app.instance_path, exist_ok=True)
 
-    talisman.init_app(app, content_security_policy=csp,
+    talisman.init_app(app, content_security_policy=_content_security_policy,
                       content_security_policy_nonce_in=['script-src'])
     db.init_app(app)
     csrf.init_app(app)

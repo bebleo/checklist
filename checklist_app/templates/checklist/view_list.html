@@ -3,6 +3,10 @@
 
 {% block title %}{{ checklist.title }}{% endblock %}
 
+{% block meta %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+{% endblock %}
+
 {% block sidebar %}
     <div class="sidebar">
         <strong>Tasks</strong>
@@ -53,5 +57,5 @@
             {% endfor %}
             </ol>
         </div>
-        <script src="{{ url_for('static', filename='scripts.js') }}" nonce="{{ csp_nonce }}"></script>
+        <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 {% endblock %}
