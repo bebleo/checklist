@@ -37,8 +37,14 @@
     
     {% for item in checklist.items %}
         {% set redirect_url = url_for('checklist.toggle_item', id=checklist.id, item_id=item.id) %}
-        <div id="list_items">
-            <input type="checkbox" class="toggle-item" value="{{ redirect_url }}" {% if item.done %}checked{% endif %}> {{ item.text }}
+        {% set edit_url = url_for('checklist.edit_item', id=checklist.id, item_id=item.id) %}
+        {% set delete_url = url_for('checklist.delete_item', id=checklist.id, item_id=item.id) %}
+        {% set item_class = "list_item" if item.active else "list_item inactive" %}
+        <div class="{{ item_class }}" id="{{ item.id }}">
+            <input type="checkbox" class="toggle-item" value="{{ redirect_url }}" {% if item.done %}checked{% endif %}>&nbsp;
+            {{ item.text }}&nbsp;
+            <span class="edit_item_links"><a class="edit-item" href="{{ edit_url }}">✏</a>
+            <a class="delete-item" href="{{ delete_url }}">❌</a></span>
         </div>
     {% endfor %}
         <!-- Form to add an item -->
@@ -57,5 +63,5 @@
             {% endfor %}
             </ol>
         </div>
-        <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+        <script src="{{ url_for('static', filename='scripts/scripts.js') }}"></script>
 {% endblock %}

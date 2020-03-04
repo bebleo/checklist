@@ -200,3 +200,9 @@ td:last-of-type {
     background-color: green;
 }
 
+.edit_item_links {
+    font-size: 80%;
+}
+.inactive {
+    text-decoration: line-through;
+}
