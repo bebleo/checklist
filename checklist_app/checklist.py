@@ -137,3 +137,25 @@ def add_item(id):
         return redirect(url_for('checklist.view', id=id))
 
     return render_template('checklist/view_list.html', checklist=checklist, form=form)
+
+
+@bp.route('/<int:id>/edit/<int:item_id>')
+@login_required
+def edit_item(id, item_id):
+    get_checklist(id)
+    ChecklistItem.query.filter_by(id=item_id).first_or_404()
+
+    return redirect(url_for('checklist.view', id=id))
+
+
+@bp.route('/<int:id>/delete/<int:item_id>')
+@login_required
+def delete_item(id, item_id):
+    checklist = get_checklist(id)
+    item = ChecklistItem.query.filter_by(id=item_id).first_or_404()
+
+    if item.checklist_id == id:
+        checklist.delete_item(item, g.user)
+        db.session.commit()
+
+    return redirect(url_for('checklist.view', id=id))
