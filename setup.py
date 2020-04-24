@@ -21,11 +21,15 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
+        "email-validator",
         "Flask",
         "flask-mail",
         "flask-wtf",
         "flask-sqlalchemy",
-        "flask-talisman"
+        "flask-talisman",
     ],
-    extras_require={"test": ["pytest", "coverage"]},
+    extras_require={
+        "test": ["pytest", "coverage"],
+        "lint": ["flake8"],
+    },
 )
