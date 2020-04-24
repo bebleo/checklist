@@ -28,9 +28,7 @@ def test_forgot_password(app, outbox, client):
         client.post('/auth/forgotpassword', data={"username": username})
 
         user = get_user(username)
-        print(user.__dict__)
         reset_token = PasswordToken.query.filter_by(user=user).first()
-        print(reset_token.__dict__)
         response = client.get(f'/auth/forgotpassword/{reset_token.token}')
         assert b'Set New Password' in response.data
         assert len(outbox) > 0
@@ -122,7 +120,8 @@ def test_get_login(client):
     "username, password, expected",
     [
         ("admin@bebleo.url", "admin", 302),
-        ("admin@bebleo.url", "false-password", 200)
+        ("admin@bebleo.url", "false-password", 200),
+        ("fake-username", "false-password", 200)
     ]
 )
 def test_post_login(client, username, password, expected):
