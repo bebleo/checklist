@@ -12,7 +12,7 @@ from checklist_app.models import AccountStatus, Checklist, User, get_user
 def app():
     """Define a new instance for the tests."""
     app = create_app({"TESTING": True, "WTF_CSRF_ENABLED": False,
-                      "SQLALCHEMY_DATABASE_URI": r"sqlite://"})
+                      "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"})
 
     with app.app_context():
         init_db()
