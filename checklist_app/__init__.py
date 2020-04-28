@@ -70,7 +70,7 @@ def create_app(test_config=None):
     db.init_app(app)
     csrf.init_app(app)
     mail.init_app(app)
-    log = app.logger
+    log = app.logger  # noqa: F841
 
     # Register BluePrints
     from checklist_app import admin, auth, checklist, home
