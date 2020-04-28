@@ -70,6 +70,7 @@ def create_app(test_config=None):
     db.init_app(app)
     csrf.init_app(app)
     mail.init_app(app)
+    log = app.logger
 
     # Register BluePrints
     from checklist_app import admin, auth, checklist, home
@@ -80,9 +81,6 @@ def create_app(test_config=None):
 
     # Add the click commands
     app.cli.add_command(init_db_command)
-
-    log = app.logger
-    log.debug("Logger assigned.")
 
     return app
 
