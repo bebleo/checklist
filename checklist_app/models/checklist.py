@@ -31,11 +31,12 @@ class Checklist(db.Model):
 
     @hybrid_property
     def percent_complete(self):
-        if len(self.items) == 0:
+        _active_items = [i for i in self.items if i.active]
+        if len(_active_items) == 0:
             return 0
 
-        done = sum([1 for i in self.items if i.done])
-        return done / len(self.items)
+        done = sum([1 for i in _active_items if i.done])
+        return done / len(_active_items)
 
     def record_change(self, description, user):
         _desc = f"{user.full_name} {description}"
