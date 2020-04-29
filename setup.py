@@ -27,6 +27,7 @@ setup(
         "flask-wtf",
         "flask-sqlalchemy",
         "flask-talisman",
+        "python-dotenv",
     ],
     extras_require={
         "test": ["pytest", "coverage"],
