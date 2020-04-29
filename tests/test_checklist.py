@@ -87,6 +87,17 @@ def test_unmark_item_done(app, client, auth):
         assert not item.done
 
 
+def test_delete_item(app, client, auth):
+    with app.app_context():
+        auth.login()
+        response = client.get('/checklist/1/delete/1')
+        assert response.status_code == 302
+        assert '/checklist/1' in response.headers['Location']
+
+        checklist = Checklist.query.get(1)
+        assert checklist.percent_complete == 0.5
+
+
 def test_mark_all_items_done(app, client, auth):
     with app.app_context():
         auth.login()
@@ -107,9 +118,7 @@ def test_delete_checklist(app, client, auth):
         assert b'Delete' in response.data
 
         # Simulate clicking the button and check that the form is deleted
-        data = {
-            "confirm_delete": "1"
-        }
+        data = {"confirm_delete": "1"}
         response = client.post('/checklist/delete/1', data=data)
         # redirects to the listing
         assert response.status_code == 302
